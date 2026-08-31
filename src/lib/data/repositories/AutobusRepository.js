@@ -167,4 +167,10 @@ export const AutobusRepository = {
       method: 'POST',
       body: JSON.stringify({ tag_uid: tagUid }),
     }),
+
+  registrarTagNfc: (tagUid, serie) =>
+    apiFetch('/nfc/tags', {
+      method: 'POST',
+      body: JSON.stringify({ tag_uid: tagUid, serial_number: Number(serie) }),
+    }),
 };

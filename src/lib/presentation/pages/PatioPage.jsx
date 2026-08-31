@@ -21,6 +21,9 @@ export const PatioPage = ({ usuario }) => {
   const [vistaActual, setVistaActual] = useState('patio');
 
   const [inicioAConfirmar, setInicioAConfirmar] = useState(null);
+  // Tag NFC escaneado que aún no está asociado a ninguna unidad — dispara el
+  // flujo de registro de llegada (el formulario lo asocia al guardar).
+  const [tagPendiente, setTagPendiente] = useState(null);
 
   const {
     autobuses, cargando, cargarAutobuses,
@@ -53,7 +56,15 @@ export const PatioPage = ({ usuario }) => {
         try {
           await avanzarPorNfc(tagUid);
         } catch (error) {
-          alert(error.message || 'No se pudo procesar el tag NFC.');
+          const msg = error.message || '';
+          if (msg.includes('no está registrado a ningún camión')) {
+            // Llegada nueva: el tag no pertenece a ninguna unidad — abrir el
+            // registro de recepción con el tag listo para asociarse.
+            setTagPendiente(tagUid);
+            setVistaActual('registrar');
+          } else {
+            alert(msg || 'No se pudo procesar el tag NFC.');
+          }
         }
       };
     } catch (error) {
@@ -131,6 +142,7 @@ export const PatioPage = ({ usuario }) => {
   const navegarA = (vista) => {
     setVistaActual(vista);
     cerrarMenu();
+    if (vista !== 'registrar') setTagPendiente(null);
     if (vista === 'patio') cargarAutobuses();
   };
 
@@ -360,7 +372,15 @@ export const PatioPage = ({ usuario }) => {
           )}
 
           {/* NUEVO: Renderizado de las páginas de tu compañero */}
-          {vistaActual === 'registrar' && esAdmin && <RegistroUnidadPage />}
+          {vistaActual === 'registrar' && (esAdmin || tagPendiente) && (
+            <RegistroUnidadPage
+              tagNfc={tagPendiente}
+              onRegistrado={() => {
+                setTagPendiente(null);
+                navegarA('patio');
+              }}
+            />
+          )}
           {vistaActual === 'configuracion' && esAdmin && <ConfiguracionPage autobuses={autobuses} />}
           {vistaActual === 'historial' && (esAdmin || esSupervisor) && <HistorialPage />}
           {vistaActual === 'reportes' && (esAdmin || esSupervisor) && <ReportesPage />}

@@ -6,7 +6,7 @@ import { apiFetch } from '../data/apiClient';
 // Fallback mientras carga GET /tipos-camion (o si la API no responde)
 const TIPOS_DEFAULT = ['ADO', 'AU', 'LUJO', 'OCC', 'SUR', 'TXO'];
 
-export const useRegistroBloc = () => {
+export const useRegistroBloc = ({ tagNfc = null, onRegistrado = null } = {}) => {
   const [step, setStep] = useState(1);
 
   const WORKFLOW_ORDER = ['Desfogue', 'Diesel', 'Ad-blue', 'Taller', 'Lavado Interior', 'Lavado Exterior'];
@@ -100,8 +100,9 @@ export const useRegistroBloc = () => {
       // Extraemos solo las áreas que el usuario marcó como true
       const areasSeleccionadas = Object.keys(formData.areasRequeridas).filter(area => formData.areasRequeridas[area]);
 
+      const serieRegistrada = formData.numeroSerie;
       await AutobusRepository.registrarAutobus({
-        numeroSerie: formData.numeroSerie,
+        numeroSerie: serieRegistrada,
         tipoUnidad: formData.tipoUnidad,
         horaSalida: formData.horaSalida,
         conductor: formData.conductor,
@@ -111,7 +112,13 @@ export const useRegistroBloc = () => {
         areaInicial: formData.areaInicial || areaRecomendada || 'Espera',
         observaciones: formData.observaciones
       });
-      
+
+      // Llegada por NFC: el tag escaneado queda asociado a la unidad recién
+      // registrada, para que los siguientes escaneos la avancen de estación.
+      if (tagNfc) {
+        await AutobusRepository.registrarTagNfc(tagNfc, serieRegistrada);
+      }
+
       setExito(true);
       setTimeout(() => {
         setExito(false);
@@ -122,7 +129,8 @@ export const useRegistroBloc = () => {
           areasRequeridas: { 'Desfogue': false, 'Diesel': false, 'Ad-blue': false, 'Taller': false, 'Lavado Interior': false, 'Lavado Exterior': false },
           areaInicial: '', observaciones: ''
         });
-      }, 3000);
+        if (onRegistrado) onRegistrado(serieRegistrada);
+      }, 2000);
       
     } catch (err) {
       setError('Error al registrar. Verifica que el número de serie no esté duplicado.');

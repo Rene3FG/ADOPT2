@@ -1,12 +1,12 @@
 // src/lib/presentation/pages/RegistroUnidadPage.jsx
 import { useRegistroBloc } from '../../logic/useRegistroBloc';
 
-export const RegistroUnidadPage = () => {
+export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) => {
   const {
     step, setStep, formData, WORKFLOW_ORDER, areaRecomendada, todasSeleccionadas, tiposUnidad,
     handleInputChange, handleCheckboxChange, handleToggleAll, avanzarPaso,
     cargando, error, exito, guardarUnidad
-  } = useRegistroBloc();
+  } = useRegistroBloc({ tagNfc, onRegistrado });
 
   // =========================================================
   // ESTILO ESTANDARIZADO PARA INPUTS (Corrige el error de colores)
@@ -31,6 +31,11 @@ export const RegistroUnidadPage = () => {
         <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
           {step === 1 ? "Paso 1: Captura de datos del autobús" : "Paso 2: Confirmación de ruta"}
         </p>
+        {tagNfc && (
+          <p style={{ margin: '10px 0 0 0', padding: '8px 12px', backgroundColor: '#FFF8E1', border: '1px solid #F0A93D', borderRadius: '8px', color: '#7A5200', fontSize: '0.85rem' }}>
+            📡 Tag NFC <strong>{tagNfc}</strong> detectado — se asociará a esta unidad al registrarla.
+          </p>
+        )}
       </header>
 
       {/* ================= PASO 1: CAPTURA ================= */}
