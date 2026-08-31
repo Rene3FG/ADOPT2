@@ -34,14 +34,22 @@ export const PatioPage = ({ usuario }) => {
   const soporteNfc = typeof window !== 'undefined' && 'NDEFReader' in window;
   const escanearNfc = async () => {
     try {
+      // Mientras el tag sigue cerca de la antena, Android reporta el mismo
+      // tag varias veces en milisegundos — sin este candado cada lectura
+      // dispara su propio avance y produce movimientos duplicados.
+      let yaLeido = false;
+      const controller = new AbortController();
       const reader = new window.NDEFReader();
-      await reader.scan();
+      await reader.scan({ signal: controller.signal });
       reader.onreading = async ({ serialNumber, message }) => {
+        if (yaLeido) return;
         // Preferimos el UID físico del tag (serialNumber); si el navegador no
         // lo expone, caemos al primer registro de texto NDEF escrito al enrolar.
         const registroTexto = message?.records?.find(r => r.recordType === 'text');
         const tagUid = serialNumber || (registroTexto && new TextDecoder(registroTexto.encoding).decode(registroTexto.data));
         if (!tagUid) return;
+        yaLeido = true;
+        controller.abort();
         try {
           await avanzarPorNfc(tagUid);
         } catch (error) {
