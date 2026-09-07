@@ -62,6 +62,11 @@ export const PatioPage = ({ usuario }) => {
             // registro de recepción con el tag listo para asociarse.
             setTagPendiente(tagUid);
             setVistaActual('registrar');
+          } else if (msg.includes('no está en tu área')) {
+            // El backend rechazó el avance porque la unidad no está registrada
+            // en el área de quien escaneó: la estación siguiente la recibió
+            // fuera del orden esperado de la ruta.
+            alert('Flujo incorrecto, confirme con el supervisor.');
           } else {
             alert(msg || 'No se pudo procesar el tag NFC.');
           }
