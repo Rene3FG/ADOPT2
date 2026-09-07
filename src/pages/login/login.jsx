@@ -1,81 +1,24 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/pages/login/login.jsx — pantalla de login de escritorio.
+// Mismo BLoC real que la vista mobile (useAuthBloc -> POST /login), solo
+// cambia el diseño visual (rediseño de Rosaura).
 import { RiBus2Line } from "react-icons/ri";
-import authService from "../../services/authService.js";
-import { useAuth } from "../../context/AuthContext.jsx";
-import Toast from "../../components/Toast.jsx";
+import { useAuthBloc } from "../../lib/logic/useAuthBloc";
 import "./login.css";
 
-function Login() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  
-  const [numeroEmpleado, setNumeroEmpleado] = useState("");
-  const [contrasena, setContrasena] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [toast, setToast] = useState(null);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      if (!numeroEmpleado.trim() || !contrasena.trim()) {
-        setError("Por favor completa todos los campos");
-        setLoading(false);
-        return;
-      }
-
-      const response = await authService.login(numeroEmpleado, contrasena);
-      console.log("Login exitoso:", response);
-
-      // Update auth context
-      login({
-        id: response.id,
-        nombre: response.nombre || numeroEmpleado,
-        rol: response.rol,
-      });
-
-      // Show success message
-      setToast({
-        message: `Bienvenido ${response.nombre || numeroEmpleado}`,
-        type: 'success'
-      });
-
-      // Redirect to dashboard
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 500);
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message || "Error al iniciar sesión. Verifica tus credenciales.");
-      setToast({
-        message: err.message || "Error al iniciar sesión",
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+function Login({ onLoginSuccess }) {
+  const {
+    idEmpleado, setIdEmpleado,
+    password, setPassword,
+    error, cargando, iniciarSesion
+  } = useAuthBloc(onLoginSuccess);
 
   return (
-    <>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
+    <div className="ado-desktop-login">
       <header className="top-bar">
         <div className="header-content">
           <div className="mini-bus">
             <RiBus2Line />
           </div>
-
           <div>
             <h2>ADO - Control de patio</h2>
             <p>Operaciones de flota</p>
@@ -89,62 +32,46 @@ function Login() {
             <RiBus2Line className="bus-svg" />
           </div>
 
-          <h1>Control de Patio</h1>
-
+          <h1>SCA</h1>
           <p className="subtitle">
             Ingresa tu número de empleado para continuar
           </p>
 
-          {error && (
-            <div 
-              className="error-message" 
-              style={{ 
-                color: '#ef4444', 
-                marginBottom: '15px', 
-                fontSize: '14px',
-                padding: '10px',
-                backgroundColor: '#fee2e2',
-                borderRadius: '4px',
-                border: '1px solid #fca5a5'
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin}>
+          <form onSubmit={iniciarSesion}>
             <div className="input-group">
-              <label>NÚMERO DE EMPLEADO</label>
+              <label htmlFor="idEmpleado">NÚMERO DE EMPLEADO</label>
               <input
                 type="text"
+                id="idEmpleado"
                 placeholder="Ej: 1001"
-                value={numeroEmpleado}
-                onChange={(e) => setNumeroEmpleado(e.target.value)}
-                disabled={loading}
+                value={idEmpleado}
+                onChange={(e) => setIdEmpleado(e.target.value)}
+                disabled={cargando}
+                required
               />
             </div>
 
             <div className="input-group">
-              <label>CONTRASEÑA</label>
+              <label htmlFor="password">CONTRASEÑA</label>
               <input
                 type="password"
+                id="password"
                 placeholder="Ingresa tu contraseña"
-                value={contrasena}
-                onChange={(e) => setContrasena(e.target.value)}
-                disabled={loading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={cargando}
+                required
               />
             </div>
 
-            <button 
-              type="submit"
-              className="login-button"
-              disabled={loading}
-              style={{
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {loading ? "Validando..." : "Entrar al sistema"}
+            {error && (
+              <div style={{ color: '#C62828', marginBottom: '15px', fontSize: '14px', padding: '10px', backgroundColor: '#fee2e2', borderRadius: '8px', textAlign: 'left' }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            <button type="submit" className="login-button" disabled={cargando}>
+              {cargando ? "Validando..." : "Entrar al sistema"}
             </button>
           </form>
 
@@ -153,7 +80,7 @@ function Login() {
           </p>
         </div>
       </main>
-    </>
+    </div>
   );
 }
 

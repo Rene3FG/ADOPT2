@@ -1,236 +1,197 @@
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
+/* Variables y botones compartidos (--primary, .btn-primary, etc.) viven en
+   desktop-shared.css bajo .ado-desktop-shell — este archivo solo escopa
+   sus propias clases para no pisar login.css ni las vistas mobile. */
+
+.ado-desktop-shell .registro-page {
+  min-height: 100vh;
   background-color: var(--background);
-  color: var(--text-primary);
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-:root{
-  --primary: #5B177F;
-  --primary-dark: #652378;
-  --background: #11131e;
-  --card-text: #e21c24;
-  --border: #e4e4e7;
-  --text-primary: #2d2d2d;
-  --text-secondary: #737373;
+.ado-desktop-shell .registro-card {
+  width: 100%;
+  max-width: 950px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-.registro-page{
-  min-height:100vh;
-  background-color: #11131e;
-  padding:30px;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
+.ado-desktop-shell .registro-title {
+  color: var(--primary);
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 5px;
 }
 
-.registro-card{
-  width:100%;
-  max-width:950px;
-  background:#11131e;
-  border-radius:16px;
-  padding:30px;
-  box-shadow:0 4px 20px rgba(0,0,0,.08);
-}
-
-.registro-title{
-  color:var(--card-text);
-  font-size:30px;
-  font-weight:700;
-  margin-bottom:5px;
-}
-
-.registro-subtitle{
-  color:var(--text-secondary);
-  font-size:14px;
-  margin-bottom:25px;
+.ado-desktop-shell .registro-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 25px;
 }
 
 /* PASOS */
 
-.step-indicator{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:12px;
-  margin-bottom:30px;
+.ado-desktop-shell .step-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
-.step{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  background:#ececf1;
-  color:#888;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-weight:600;
+.ado-desktop-shell .step {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
 }
 
-.step.active{
-  background:var(--primary);
-  color:white;
+.ado-desktop-shell .step.active {
+  background: var(--primary);
+  color: white;
 }
 
 /* FORMULARIO */
 
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px;
+.ado-desktop-shell .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
 }
 
-.registro-card .input-group{
-  display:flex;
-  flex-direction:column;
+.ado-desktop-shell .input-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.registro-card .input-group label{
-  margin-bottom:6px;
-  font-size:13px;
-  font-weight:600;
-  color:#ffffff;
+.ado-desktop-shell .input-group label {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.registro-card .input-group input,
-.registro-card .input-group select,
-.registro-card .input-group textarea{
-  padding:12px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  font-size:14px;
-  background:white;
+.ado-desktop-shell .input-group input,
+.ado-desktop-shell .input-group select,
+.ado-desktop-shell .input-group textarea {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
   color: var(--text-primary);
 }
 
 /* Placeholder color */
-.registro-card .input-group input::placeholder,
-.registro-card .input-group textarea::placeholder{
-  color: #aaa;
+.ado-desktop-shell .input-group input::placeholder,
+.ado-desktop-shell .input-group textarea::placeholder {
+  color: #94a3b8;
   font-weight: 400;
 }
 
 /* Para select (opciones) */
-.registro-card .input-group select{
+.ado-desktop-shell .input-group select {
   color: var(--text-primary);
 }
 
-.registro-card .input-group select option{
+.ado-desktop-shell .input-group select option {
   color: var(--text-primary);
-  background: white;
+  background: #ffffff;
 }
 
-.registro-card .input-group textarea{
-  min-height:100px;
-  resize:none;
+.ado-desktop-shell .input-group textarea {
+  min-height: 100px;
+  resize: none;
 }
 
-.registro-card .input-group input:focus,
-.registro-card .input-group select:focus,
-.registro-card .input-group textarea:focus{
-  outline:none;
-  border-color:var(--card-text);
-  box-shadow:0 0 0 3px rgba(122,45,145,.15);
+.ado-desktop-shell .input-group input:focus,
+.ado-desktop-shell .input-group select:focus,
+.ado-desktop-shell .input-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(226, 28, 36, 0.15);
   color: var(--text-primary);
 }
 
 /* ÁREAS */
 
-.area-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:15px;
+.ado-desktop-shell .area-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
 }
 
-.area-card{
-  background:white;
-  border:1px solid #ddd;
-  border-radius:12px;
-  padding:20px;
-  text-align:center;
-  font-weight:600;
-  cursor:pointer;
-  transition:.2s;
-  color: var(--primary)
+.ado-desktop-shell .area-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+  color: var(--text-primary);
 }
 
-.area-card:hover{
-  transform:translateY(-2px);
-  border-color:var(--primary);
+.ado-desktop-shell .area-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
-.area-card.selected{
-  background:#f5ecf9;
-  border:2px solid var(--primary);
-  color:var(--primary);
+.ado-desktop-shell .area-card.selected {
+  background: #fef2f2;
+  border: 2px solid var(--primary);
+  color: var(--primary);
 }
 
 /* RESUMEN */
 
-.confirm-card{
-  background:#fafafa;
-  border:1px solid #e5e5e5;
-  border-radius:12px;
-  padding:20px;
-  color: var(--primary)
+.ado-desktop-shell .confirm-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text-primary);
 }
 
-.confirm-card p{
-  margin:10px 0;
+.ado-desktop-shell .confirm-card p {
+  margin: 10px 0;
 }
 
 /* BOTONES */
 
-.button-group{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-top:25px;
+.ado-desktop-shell .button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
 }
 
-.btn-primary,
-.btn-success{
-  background:var(--primary);
-  color:white;
-  border:none;
-  padding:12px 22px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-.btn-primary:hover,
-.btn-success:hover{
-  background:var(--primary-dark);
-}
-
-.btn-secondary{
-  background:white;
-  border:1px solid #d4d4d8;
-  color:#444;
-  padding:12px 22px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-.btn-secondary:hover{
-  background:#f4f4f5;
-}
+/* .btn-primary / .btn-secondary / .btn-success -> desktop-shared.css */
 
 /* RESPONSIVE */
 
-@media(max-width:768px){
-
-  .form-grid{
-    grid-template-columns:1fr;
+@media(max-width:768px) {
+  .ado-desktop-shell .form-grid {
+    grid-template-columns: 1fr;
   }
 
-  .area-grid{
-    grid-template-columns:1fr;
+  .ado-desktop-shell .area-grid {
+    grid-template-columns: 1fr;
   }
 
-  .button-group{
-    flex-direction:column;
+  .ado-desktop-shell .button-group {
+    flex-direction: column;
   }
 }

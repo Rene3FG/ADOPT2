@@ -1,132 +1,26 @@
-import { useState } from "react";
-import apiClient from "../../services/apiClient.js";
-import "./Resgistro.css";
+// src/pages/Registro/Registro.jsx — asistente de registro de escritorio
+// (rediseño de Rosaura), wireado al mismo useRegistroBloc real que usa
+// RegistroUnidadPage.jsx en mobile (POST /corridas + /movimientos + NFC).
+import { useState } from 'react';
+import { useRegistroBloc } from '../../lib/logic/useRegistroBloc.js';
+import './Resgistro.css';
 
-const AREA_TO_API = {
-  "Desfogue": "DESFOGUE", "Diesel": "DIESEL", "Ad-Blue": "ADDBLUE",
-  "Taller": "TALLER", "Lavado Interior": "LAVADO INTERIOR", "Lavado Exterior": "LAVADO EXTERIOR",
-};
+export default function Registro({ tagNfc = null, onRegistrado = null }) {
+  const {
+    formData, WORKFLOW_ORDER, areaRecomendada, tiposUnidad,
+    handleInputChange, handleCheckboxChange,
+    cargando, error, exito, guardarUnidad
+  } = useRegistroBloc({ tagNfc, onRegistrado });
 
-export default function Registro({
-  agregarCamion,
-  agregarHistorial
-}) {
   const [paso, setPaso] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [mostrarModalExito, setMostrarModalExito] = useState(false);
 
-  const [camion, setCamion] = useState({
-    numero: "",
-    tipoUnidad: "",
-    observaciones: "",
-    area: "",
-    conductor: "",
-    origen: "",
-    destino: "",
-    areasRuta: [] // Lista de las áreas seleccionadas
-  });
+  const areasSeleccionadas = WORKFLOW_ORDER.filter((area) => formData.areasRequeridas[area]);
+  const tieneAreas = areasSeleccionadas.length > 0;
+  const puedeContinuarPaso2 = formData.numeroSerie && formData.horaSalida;
 
-  const alternarAreaEnRuta = (nombreArea) => {
-    let nuevaRuta = [...camion.areasRuta];
-    if (nuevaRuta.includes(nombreArea)) {
-      nuevaRuta = nuevaRuta.filter(a => a !== nombreArea);
-    } else {
-      nuevaRuta.push(nombreArea);
-    }
-    setCamion({
-      ...camion,
-      areasRuta: nuevaRuta,
-      area: nuevaRuta.length > 0 ? nuevaRuta[0] : ""
-    });
-  };
-
-  const registrarCamion = async () => {
-    setError("");
-    setLoading(true);
-
-    try {
-      // Validación básica
-      if (!camion.numero.trim()) {
-        setError("El número de autobús es requerido");
-        setLoading(false);
-        return;
-      }
-
-      if (!camion.conductor.trim()) {
-        setError("El conductor es requerido");
-        setLoading(false);
-        return;
-      }
-
-      const needMap = {
-        need_desfogue: camion.areasRuta.includes("Desfogue") ? 1 : 0,
-        need_diesel:   camion.areasRuta.includes("Diesel") ? 1 : 0,
-        need_adblue:   camion.areasRuta.includes("Ad-Blue") ? 1 : 0,
-        need_taller:   camion.areasRuta.includes("Taller") ? 1 : 0,
-        need_lav_int:  camion.areasRuta.includes("Lavado Interior") ? 1 : 0,
-        need_lav_ext:  camion.areasRuta.includes("Lavado Exterior") ? 1 : 0,
-      };
-
-      await apiClient.post('/corridas', {
-        serie: Number(camion.numero) || camion.numero,
-        tipo_nombre: camion.tipoUnidad || "ADO",
-        conductor: camion.conductor || null,
-        terminal_origen: camion.origen || null,
-        terminal_destino: camion.destino || null,
-        observaciones: camion.observaciones || null,
-        ...needMap,
-      });
-
-      const areaApi = AREA_TO_API[camion.areasRuta[0]];
-      if (areaApi) {
-        await apiClient.post('/movimientos', {
-          serie: Number(camion.numero) || camion.numero,
-          area_nombre: areaApi,
-        });
-      }
-
-      if (agregarCamion) {
-        agregarCamion({
-          ...camion,
-          id: Date.now().toString(),
-          codigo: camion.numero,
-          ruta: camion.areasRuta
-        });
-      }
-
-      if (agregarHistorial) {
-        agregarHistorial({
-          id: Date.now(),
-          unidad: camion.numero,
-          areaFinal: camion.area,
-          fecha: new Date().toLocaleDateString('es-MX'),
-          hora: new Date().toLocaleTimeString('es-MX'),
-          mensaje: `Se registró la unidad ${camion.numero} en el área ${camion.area}`
-        });
-      }
-
-      setMostrarModalExito(true);
-
-      // Limpiar formulario
-      setCamion({
-        numero: "",
-        tipoUnidad: "",
-        observaciones: "",
-        area: "",
-        conductor: "",
-        origen: "",
-        destino: "",
-        areasRuta: []
-      });
-
-      setPaso(1);
-    } catch (err) {
-      console.error("Error registrando camión:", err);
-      setError(err.message || "Error al registrar el autobús. Intenta nuevamente.");
-    } finally {
-      setLoading(false);
-    }
+  const confirmarRegistro = async () => {
+    await guardarUnidad();
+    setPaso(1);
   };
 
   return (
@@ -135,237 +29,115 @@ export default function Registro({
         <h1 className="registro-title">Registro de Autobús</h1>
         <p className="registro-subtitle">Control de acceso al patio</p>
 
-        {error && <div className="error-message" style={{ color: '#ef4444', marginBottom: '15px', padding: '10px', borderRadius: '4px', backgroundColor: '#fee2e2' }}>{error}</div>}
+        {tagNfc && (
+          <p style={{ margin: '0 0 20px 0', padding: '8px 12px', backgroundColor: '#FFF8E1', border: '1px solid #F0A93D', borderRadius: '8px', color: '#7A5200', fontSize: '0.85rem' }}>
+            📡 Tag NFC <strong>{tagNfc}</strong> detectado — se asociará a esta unidad al registrarla.
+          </p>
+        )}
 
         <div className="step-indicator">
-          {[1,2,3,4].map(s => <div key={s} className={`step ${paso >= s ? "active" : ""}`}>{s}</div>)}
+          {[1, 2, 3, 4].map((s) => <div key={s} className={`step ${paso >= s ? 'active' : ''}`}>{s}</div>)}
         </div>
 
         {paso === 1 && (
-          <>
-            <h2 style={{ color: '#ff0000' }}>Nuevo Registro</h2>
-
-            <div className="button-group">
-              <button
-                className="btn-primary"
-                onClick={() => setPaso(2)}
-                disabled={loading}
-              >
-                Registrar Autobús
-              </button>
-            </div>
-          </>
+          <div className="button-group" style={{ justifyContent: 'center' }}>
+            <button className="btn-primary" onClick={() => setPaso(2)}>Registrar Autobús</button>
+          </div>
         )}
 
         {paso === 2 && (
           <>
-            <h2 style={{ color: '#ff0000' }}>Datos del Autobús</h2>
+            <h2 style={{ color: 'var(--primary)' }}>Datos del Autobús</h2>
             <div className="form-grid">
               <div className="input-group">
-                <label>Número de Autobús</label>
-                <input
-                  type="text"
-                  placeholder="Ej: ADO-1001"
-                  value={camion.numero}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      numero: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                />
+                <label>Número de Autobús *</label>
+                <input type="number" name="numeroSerie" placeholder="Ej: 1001" value={formData.numeroSerie} onChange={handleInputChange} required />
               </div>
               <div className="input-group">
                 <label>Tipo de Unidad</label>
-                <select
-                  value={camion.tipoUnidad}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      tipoUnidad: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                >
-                  <option value="">Seleccione</option>
-                  <option value="ADO">ADO</option>
-                  <option value="OCC">OCC</option>
-                  <option value="AU">AU</option>
-                  <option value="LUJO">LUJO</option>
-                  <option value="SUR">SUR</option>
-                  <option value="TXO">TXO</option>
+                <select name="tipoUnidad" value={formData.tipoUnidad} onChange={handleInputChange}>
+                  {tiposUnidad.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
                 </select>
               </div>
               <div className="input-group">
-                <label>Nombre del Conductor</label>
-                <input
-                  type="text"
-                  placeholder="Nombre completo"
-                  value={camion.conductor}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      conductor: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                />
+                <label>Hora límite de salida *</label>
+                <input type="time" name="horaSalida" value={formData.horaSalida} onChange={handleInputChange} required />
               </div>
-
+              <div className="input-group">
+                <label>Nombre del Conductor</label>
+                <input type="text" name="conductor" placeholder="Nombre completo" value={formData.conductor} onChange={handleInputChange} />
+              </div>
               <div className="input-group">
                 <label>Terminal de Origen</label>
-                <input
-                  type="text"
-                  placeholder="Ej: CDMX TAPO"
-                  value={camion.origen}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      origen: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                />
+                <input type="text" name="terminalOrigen" placeholder="Ej: CDMX TAPO" value={formData.terminalOrigen} onChange={handleInputChange} />
               </div>
               <div className="input-group">
                 <label>Terminal de Destino</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Oaxaca Centro"
-                  value={camion.destino}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      destino: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                />
+                <input type="text" name="terminalDestino" placeholder="Ej: Oaxaca Centro" value={formData.terminalDestino} onChange={handleInputChange} />
               </div>
-              <div className="input-group">
+              <div className="input-group" style={{ gridColumn: '1 / -1' }}>
                 <label>Observaciones</label>
-                <textarea
-                  rows="4"
-                  placeholder="Detalles de llegada o averías sutiles..."
-                  value={camion.observaciones}
-                  onChange={(e) =>
-                    setCamion({
-                      ...camion,
-                      observaciones: e.target.value,
-                    })
-                  }
-                  disabled={loading}
-                />
+                <textarea rows="3" name="observaciones" placeholder="Detalles de llegada o averías sutiles..." value={formData.observaciones} onChange={handleInputChange} />
               </div>
-
             </div>
             <div className="button-group">
-              <button
-                className="btn-secondary"
-                onClick={() => setPaso(1)}
-                disabled={loading}
-              >
-                Atrás
-              </button>
-
-              <button
-                className="btn-primary"
-                onClick={() => setPaso(3)}
-                disabled={loading}
-              >
-                Continuar
-              </button>
+              <button className="btn-secondary" onClick={() => setPaso(1)}>Atrás</button>
+              <button className="btn-primary" disabled={!puedeContinuarPaso2} onClick={() => setPaso(3)}>Continuar</button>
             </div>
           </>
         )}
 
         {paso === 3 && (
           <>
-            <h2 style={{ color: '#5B177F' }}>Seleccionar las Áreas de Ruta</h2>
+            <h2 style={{ color: 'var(--primary)' }}>Seleccionar las Áreas de Ruta</h2>
             <div className="area-grid">
-              {["Desfogue", "Diesel", "Ad-Blue", "Taller", "Lavado Interior", "Lavado Exterior"].map((area) => {
-                const index = camion.areasRuta.indexOf(area);
-                return (
-                  <div key={area} className={`area-card ${index !== -1 ? "selected" : ""}`} onClick={() => alternarAreaEnRuta(area)}>
-                    {area}
-                    {index !== -1 && <span style={{display: 'block', fontWeight: 'bold', marginTop: '5px'}}>{index + 1}a área</span>}
-                  </div>
-                );
-              })}
+              {WORKFLOW_ORDER.map((area) => (
+                <div
+                  key={area}
+                  className={`area-card ${formData.areasRequeridas[area] ? 'selected' : ''}`}
+                  onClick={() => handleCheckboxChange(area)}
+                >
+                  {area}
+                </div>
+              ))}
             </div>
             <div className="button-group">
-              <button
-                className="btn-secondary"
-                onClick={() => setPaso(2)}
-                disabled={loading}
-              >
-                Atrás
-              </button>
-
-              <button
-                className="btn-primary"
-                onClick={() => setPaso(4)}
-                disabled={loading}
-              >
-                Continuar
-              </button>
+              <button className="btn-secondary" onClick={() => setPaso(2)}>Atrás</button>
+              <button className="btn-primary" disabled={!tieneAreas} onClick={() => setPaso(4)}>Continuar</button>
             </div>
           </>
         )}
 
         {paso === 4 && (
           <>
-            <h2 style={{ color: '#5B177F' }}>Confirmar Registro</h2>
+            <h2 style={{ color: 'var(--primary)' }}>Confirmar Registro</h2>
             <div className="confirm-card">
-              <p>
-                <strong>Número:</strong> {camion.numero || "No especificado"}
-              </p>
-              <p>
-                <strong>Tipo:</strong> {camion.tipoUnidad || "No seleccionado"}
-              </p>
-              <p>
-                <strong>Conductor:</strong> {camion.conductor || "No asignado"}
-              </p>
-              <p>
-                <strong>Ruta:</strong> {camion.origen || "N/A"} &rarr; {camion.destino || "N/A"}
-              </p>
-              <p>
-                <strong>Área Inicial Asignada:</strong> {camion.area || "Ninguna"}
-              </p>
-              <p>
-                <strong>Ruta Planificada:</strong> {camion.areasRuta.length > 0 ? camion.areasRuta.join(" ➔ ") : "Ninguna"}
-              </p>
-              <p>
-                <strong>Observaciones:</strong> {camion.observaciones || "Sin observaciones"}
-              </p>
+              <p><strong>Número:</strong> {formData.numeroSerie} ({formData.tipoUnidad})</p>
+              {formData.conductor && <p><strong>Conductor:</strong> {formData.conductor}</p>}
+              <p><strong>Hora de salida:</strong> {formData.horaSalida}</p>
+              <p><strong>Ruta Planificada:</strong> {areasSeleccionadas.length > 0 ? areasSeleccionadas.join(' ➔ ') : 'Ninguna'}</p>
+              <p><strong>Enviar primero a:</strong> {areaRecomendada || 'Espera'}</p>
             </div>
-            <div className="button-group">
-              <button
-                className="btn-secondary"
-                onClick={() => setPaso(3)}
-                disabled={loading}
-              >
-                Atrás
-              </button>
 
-              <button
-                className="btn-success"
-                onClick={registrarCamion}
-                disabled={loading}
-              >
-                {loading ? "Registrando..." : "Confirmar Registro"}
+            {error && <p style={{ color: 'var(--primary)', fontWeight: 600 }}>⚠️ {error}</p>}
+
+            <div className="button-group">
+              <button className="btn-secondary" disabled={cargando} onClick={() => setPaso(3)}>Atrás</button>
+              <button className="btn-success" disabled={cargando} onClick={confirmarRegistro}>
+                {cargando ? 'Guardando...' : 'Confirmar Registro'}
               </button>
             </div>
           </>
         )}
       </div>
 
-      {mostrarModalExito && (
+      {exito && (
         <div className="modal-overlay" style={{ zIndex: 1000 }}>
           <div className="modal-card">
-            <h2>✅ Registro Exitoso</h2>
-            <button className="btn-primary" onClick={() => setMostrarModalExito(false)}>Ok</button>
+            <div className="modal-card__body" style={{ textAlign: 'center' }}>
+              <h2>✅ Registro Exitoso</h2>
+              <p>La unidad fue registrada y enviada al patio.</p>
+            </div>
           </div>
         </div>
       )}

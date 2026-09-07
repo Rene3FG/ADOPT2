@@ -1,215 +1,56 @@
-import { useState, useEffect } from "react";
-import { MdAddLocation, MdPersonAdd, MdDirectionsBus, MdDelete, MdArrowBack, MdCompareArrows } from "react-icons/md";
-import areasService from "../../services/areasService.js";
-import camionesService from "../../services/camionesService.js";
-import { UsuarioRepository } from "../../lib/data/repositories/UsuarioRepository.js";
-import "./ConfAvanz.css";
+// src/pages/ConfAvanz/ConfAvaz.jsx — Configuración Avanzada de escritorio.
+// Mismos BLoCs reales que ConfiguracionPage.jsx en mobile (useAreasBloc,
+// useUsuariosBloc) + confirmarMovimientoDirecto de usePatioBloc para la
+// reubicación forzada — nada de esto vive en estado local/mock.
+import { useState } from 'react';
+import { MdAddLocation, MdPersonAdd, MdDirectionsBus, MdDelete, MdArrowBack, MdCompareArrows, MdEdit } from 'react-icons/md';
+import { useAreasBloc } from '../../lib/logic/useAreasBloc.js';
+import { useUsuariosBloc } from '../../lib/logic/useUsuariosBloc.js';
+import './ConfAvanz.css';
 
-export default function ConfAvanz({ areasConfig, setAreasConfig, camiones, setCamiones }) {
+export default function ConfAvaz({ autobuses = [], areas = [], confirmarMovimientoDirecto }) {
   const [vistaActual, setVistaActual] = useState('menu');
 
-  const [nuevaAreaNombre, setNuevaAreaNombre] = useState('');
-  const [nuevaAreaCapacidad, setNuevaAreaCapacidad] = useState(4);
-  const [loadingArea, setLoadingArea] = useState(false);
-  const [errorArea, setErrorArea] = useState("");
+  const {
+    areas: areasReales, cargandoAreas, formDataArea, esEdicionArea,
+    abrirModalNuevaArea, abrirModalEditarArea, handleAreaInputChange, guardarArea, eliminarArea, guardandoArea
+  } = useAreasBloc();
 
-  const [rolesDisponibles, setRolesDisponibles] = useState([]);
-  const [nuevoUsuario, setNuevoUsuario] = useState({ username: '', nombre: '', rol: 'Operator', password: '' });
-  const [loadingUsuario, setLoadingUsuario] = useState(false);
-  const [errorUsuario, setErrorUsuario] = useState('');
-  const [successUsuario, setSuccessUsuario] = useState('');
-
-  useEffect(() => {
-    if (vistaActual === 'usuarios' && rolesDisponibles.length === 0) {
-      UsuarioRepository.listarRoles().then(setRolesDisponibles).catch(() => {});
-    }
-  }, [vistaActual]);
+  const {
+    usuarios, cargando: cargandoUsuarios, modalAbierto, esEdicion, guardando: guardandoUsu, formData: formUsu, roles,
+    abrirModalNuevo, abrirModalEditar, cerrarModal, handleInputChange: handleUsuChange, guardarUsuario, eliminarUsuario
+  } = useUsuariosBloc();
 
   const [camionSeleccionadoId, setCamionSeleccionadoId] = useState('');
   const [areaDestinoId, setAreaDestinoId] = useState('');
-  const [loadingReubicacion, setLoadingReubicacion] = useState(false);
-  const [errorReubicacion, setErrorReubicacion] = useState("");
-
-  const agregarArea = async (e) => {
-    e.preventDefault();
-    setErrorArea("");
-    setLoadingArea(true);
-
-    try {
-      if (!nuevaAreaNombre.trim()) {
-        setErrorArea("El nombre del área es requerido");
-        setLoadingArea(false);
-        return;
-      }
-
-      if (areasConfig.some(a => a.id.toLowerCase() === nuevaAreaNombre.toLowerCase())) {
-        setErrorArea("Esta área ya existe en el patio");
-        setLoadingArea(false);
-        return;
-      }
-
-      const nuevaArea = { 
-        id: nuevaAreaNombre, 
-        capacidad: parseInt(nuevaAreaCapacidad) || 4 
-      };
-
-      // Crear área en API
-      const areaCreada = await areasService.createArea(nuevaArea);
-      console.log("Área creada en API:", areaCreada);
-
-      // Actualizar estado local
-      setAreasConfig([...areasConfig, areaCreada || nuevaArea]);
-
-      alert("Área creada exitosamente");
-      setNuevaAreaNombre('');
-      setNuevaAreaCapacidad(4);
-    } catch (err) {
-      console.error("Error creating area:", err);
-      setErrorArea(err.message || "Error al crear el área");
-    } finally {
-      setLoadingArea(false);
-    }
-  };
-
-  const eliminarArea = async (idArea) => {
-    const confirmar = window.confirm(`¿Estás seguro de eliminar el área "${idArea}"?`);
-    if (!confirmar) return;
-
-    try {
-      setLoadingArea(true);
-      setErrorArea("");
-
-      // Eliminar en API
-      await areasService.deleteArea(idArea);
-      console.log("Área eliminada de API");
-
-      // Actualizar estado local
-      setAreasConfig(areasConfig.filter(a => a.id !== idArea));
-      alert("Área eliminada exitosamente");
-    } catch (err) {
-      console.error("Error deleting area:", err);
-      setErrorArea(err.message || "Error al eliminar el área");
-    } finally {
-      setLoadingArea(false);
-    }
-  };
+  const [reubicando, setReubicando] = useState(false);
 
   const ejecutarReubicacion = async (e) => {
     e.preventDefault();
-    setErrorReubicacion("");
-    setLoadingReubicacion(true);
+    if (!camionSeleccionadoId || !areaDestinoId) return;
 
+    const bus = autobuses.find((c) => String(c.busId) === String(camionSeleccionadoId));
+    const infoAreaDestino = areas.find((a) => a.id === areaDestinoId);
+    const limite = infoAreaDestino?.capacidad ?? 4;
+    const actuales = autobuses.filter((c) => c.currentArea === areaDestinoId).length;
+
+    if (actuales >= limite) {
+      alert(`⚠️ Capacidad máxima superada. El área ${areaDestinoId} está llena.`);
+      return;
+    }
+
+    setReubicando(true);
     try {
-      if (!camionSeleccionadoId || !areaDestinoId) {
-        setErrorReubicacion("Debes seleccionar un camión y un área destino");
-        setLoadingReubicacion(false);
-        return;
-      }
-
-      const infoCamion = camiones.find(c => c.id === camionSeleccionadoId);
-      const infoAreaDestino = areasConfig.find(a => a.id === areaDestinoId);
-      const limiteMaximo = infoAreaDestino ? infoAreaDestino.capacidad : 4;
-      const actualesEnDestino = camiones.filter(c => c.area === areaDestinoId).length;
-
-      if (actualesEnDestino >= limiteMaximo) {
-        setErrorReubicacion(`Capacidad máxima superada. El área ${areaDestinoId} está llena.`);
-        setLoadingReubicacion(false);
-        return;
-      }
-
-      // Reubicación en API
-      await camionesService.reubicacionForzada(camionSeleccionadoId, areaDestinoId);
-      console.log("Reubicación forzada registrada en API");
-
-      // Actualizar estado local
-      const camionesModificados = camiones.map((c) => {
-        if (c.id === camionSeleccionadoId) {
-          return { ...c, area: areaDestinoId };
-        }
-        return c;
-      });
-
-      setCamiones(camionesModificados);
-      alert(`Reubicación exitosa: El autobús ${infoCamion.codigo} fue forzado a "${areaDestinoId}".`);
-
+      await confirmarMovimientoDirecto(bus, areaDestinoId);
+      alert(`⚡ Reubicación exitosa: el autobús ${bus.busId} fue forzado a "${areaDestinoId}".`);
       setCamionSeleccionadoId('');
       setAreaDestinoId('');
-    } catch (err) {
-      console.error("Error reubicando camión:", err);
-      setErrorReubicacion(err.message || "Error al reubicación del autobús");
+    } catch (error) {
+      alert(error.message || 'Error al reubicar la unidad.');
     } finally {
-      setLoadingReubicacion(false);
+      setReubicando(false);
     }
   };
-
-  const crearUsuario = async (e) => {
-    e.preventDefault();
-    setErrorUsuario('');
-    setSuccessUsuario('');
-    setLoadingUsuario(true);
-    try {
-      await UsuarioRepository.crear({
-        username: nuevoUsuario.username,
-        password: nuevoUsuario.password,
-        nombre: nuevoUsuario.nombre,
-        rol: nuevoUsuario.rol,
-      });
-      setSuccessUsuario(`Usuario "${nuevoUsuario.username}" creado correctamente.`);
-      setNuevoUsuario({ username: '', nombre: '', rol: 'Operator', password: '' });
-    } catch (err) {
-      setErrorUsuario(err.message || 'Error al crear usuario');
-    } finally {
-      setLoadingUsuario(false);
-    }
-  };
-
-  if (vistaActual === 'usuarios') {
-    return (
-      <div className="config-panel">
-        <div className="config-header-flex">
-          <button className="btn-back" onClick={() => { setVistaActual('menu'); setErrorUsuario(''); setSuccessUsuario(''); }}><MdArrowBack /> Volver</button>
-          <h2>Agregar Usuario</h2>
-        </div>
-
-        {errorUsuario && <div style={{ color: '#ef4444', marginBottom: '15px', padding: '10px', borderRadius: '4px', backgroundColor: '#fee2e2' }}>{errorUsuario}</div>}
-        {successUsuario && <div style={{ color: '#16a34a', marginBottom: '15px', padding: '10px', borderRadius: '4px', backgroundColor: '#dcfce7' }}>{successUsuario}</div>}
-
-        <form onSubmit={crearUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '420px' }}>
-          <div>
-            <label style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block', marginBottom: '5px' }}>ID Empleado (nombre de usuario)</label>
-            <input type="text" value={nuevoUsuario.username} onChange={e => setNuevoUsuario(u => ({ ...u, username: e.target.value }))}
-              required disabled={loadingUsuario}
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <label style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block', marginBottom: '5px' }}>Nombre Completo</label>
-            <input type="text" value={nuevoUsuario.nombre} onChange={e => setNuevoUsuario(u => ({ ...u, nombre: e.target.value }))}
-              required disabled={loadingUsuario}
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block', marginBottom: '5px' }}>Rol</label>
-              <select value={nuevoUsuario.rol} onChange={e => setNuevoUsuario(u => ({ ...u, rol: e.target.value }))}
-                disabled={loadingUsuario}
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid var(--border-color)', boxSizing: 'border-box', backgroundColor: 'white' }}>
-                {rolesDisponibles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block', marginBottom: '5px' }}>Contraseña</label>
-              <input type="password" value={nuevoUsuario.password} onChange={e => setNuevoUsuario(u => ({ ...u, password: e.target.value }))}
-                required disabled={loadingUsuario}
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }} />
-            </div>
-          </div>
-          <button type="submit" className="btn-primary" disabled={loadingUsuario} style={{ marginTop: '6px' }}>
-            {loadingUsuario ? 'Creando...' : 'Crear Usuario'}
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   if (vistaActual === 'areas') {
     return (
@@ -219,52 +60,33 @@ export default function ConfAvanz({ areasConfig, setAreasConfig, camiones, setCa
           <h2>Gestor de Áreas del Patio</h2>
         </div>
 
-        {errorArea && <div style={{ color: '#ef4444', marginBottom: '15px', padding: '10px', borderRadius: '4px', backgroundColor: '#fee2e2' }}>{errorArea}</div>}
-
-        <form className="area-form" onSubmit={agregarArea}>
+        <form className="area-form" onSubmit={guardarArea}>
           <div className="input-group-row">
-            <input
-              type="text"
-              placeholder="Nombre del área (Ej. Bahía 1)"
-              value={nuevaAreaNombre}
-              onChange={(e) => setNuevaAreaNombre(e.target.value)}
-              disabled={loadingArea}
-              required
-            />
-            <input
-              type="number"
-              placeholder="Capacidad"
-              min="1"
-              value={nuevaAreaCapacidad}
-              onChange={(e) => setNuevaAreaCapacidad(e.target.value)}
-              disabled={loadingArea}
-              required
-            />
-            <button type="submit" className="btn-primary" disabled={loadingArea}>
-              {loadingArea ? "Creando..." : "Crear"}
-            </button>
+            <input type="text" name="nombre" placeholder="Nombre del área (Ej. Bahía 1)" value={formDataArea.nombre} onChange={handleAreaInputChange} required disabled={esEdicionArea} />
+            <input type="number" name="capacidad" placeholder="Capacidad" min="1" value={formDataArea.capacidad} onChange={handleAreaInputChange} required />
+            <button type="submit" className="btn-primary" disabled={guardandoArea}>{esEdicionArea ? 'Guardar' : 'Crear'}</button>
+            {esEdicionArea && <button type="button" className="btn-secondary" onClick={abrirModalNuevaArea}>Cancelar</button>}
           </div>
         </form>
 
         <div className="area-list-container">
           <h3>Áreas Activas</h3>
-          <ul className="area-list">
-            {areasConfig.map((area) => (
-              <li key={area.id} className="area-list-item">
-                <div className="area-info">
-                  <strong>{area.id}</strong>
-                  <span>Capacidad: {area.capacidad} autobuses</span>
-                </div>
-                <button
-                  className="btn-delete"
-                  onClick={() => eliminarArea(area.id)}
-                  disabled={loadingArea}
-                >
-                  <MdDelete />
-                </button>
-              </li>
-            ))}
-          </ul>
+          {cargandoAreas ? <p>Cargando áreas...</p> : (
+            <ul className="area-list">
+              {areasReales.map((area) => (
+                <li key={area.dbId} className="area-list-item">
+                  <div className="area-info">
+                    <strong>{area.nombre}</strong>
+                    <span>Capacidad: {area.capacidad} autobuses</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-delete" onClick={() => abrirModalEditarArea(area)} title="Editar capacidad"><MdEdit /></button>
+                    <button className="btn-delete" onClick={() => eliminarArea(area.dbId, area.nombre)} title="Eliminar"><MdDelete /></button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     );
@@ -279,48 +101,89 @@ export default function ConfAvanz({ areasConfig, setAreasConfig, camiones, setCa
         </div>
 
         <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '13px' }}>
-          *Nota: Como Administrador, esta herramienta moverá el autobús ignorando por completo el ciclo estricto del patio.
+          *Nota: esta herramienta mueve el autobús ignorando el ciclo estricto del patio (misma llamada que el drag-and-drop del tablero).
         </p>
-
-        {errorReubicacion && <div style={{ color: '#ef4444', marginBottom: '15px', padding: '10px', borderRadius: '4px', backgroundColor: '#fee2e2' }}>{errorReubicacion}</div>}
 
         <form className="reubicacion-form" onSubmit={ejecutarReubicacion}>
           <div className="form-group-vertical">
             <label>1. Selecciona el Autobús a mover:</label>
-            <select
-              value={camionSeleccionadoId}
-              onChange={(e) => setCamionSeleccionadoId(e.target.value)}
-              disabled={loadingReubicacion}
-              required
-            >
-              <option value="">-- Seleccionar Autobús ID --</option>
-              {camiones.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.codigo} ({c.tipo}) - Actualmente en: {c.area}
-                </option>
+            <select value={camionSeleccionadoId} onChange={(e) => setCamionSeleccionadoId(e.target.value)} required>
+              <option value="">-- Seleccionar Autobús --</option>
+              {autobuses.map((c) => (
+                <option key={c.busId} value={c.busId}>{c.busId} ({c.busType}) - Actualmente en: {c.currentArea}</option>
               ))}
             </select>
           </div>
 
           <div className="form-group-vertical" style={{ marginTop: '15px' }}>
             <label>2. Forzar hacia el Área destino:</label>
-            <select
-              value={areaDestinoId}
-              onChange={(e) => setAreaDestinoId(e.target.value)}
-              disabled={loadingReubicacion}
-              required
-            >
+            <select value={areaDestinoId} onChange={(e) => setAreaDestinoId(e.target.value)} required>
               <option value="">-- Seleccionar Destino --</option>
-              {areasConfig.map(a => (
-                <option key={a.id} value={a.id}>{a.id}</option>
-              ))}
+              {areas.map((a) => <option key={a.id} value={a.id}>{a.nombre || a.id}</option>)}
+              <option value="Salida">Salida</option>
             </select>
           </div>
 
-          <button type="submit" className="btn-primary btn-block" style={{ marginTop: '20px', width: '100%' }} disabled={loadingReubicacion}>
-            <MdCompareArrows /> {loadingReubicacion ? "Procesando..." : "Forzar Reubicación de Unidad"}
+          <button type="submit" className="btn-primary btn-block" style={{ marginTop: '20px', width: '100%' }} disabled={reubicando}>
+            <MdCompareArrows /> {reubicando ? 'Reubicando...' : 'Forzar Reubicación de Unidad'}
           </button>
         </form>
+      </div>
+    );
+  }
+
+  if (vistaActual === 'usuarios') {
+    return (
+      <div className="config-panel" style={{ maxWidth: '900px' }}>
+        <div className="config-header-flex">
+          <button className="btn-back" onClick={() => setVistaActual('menu')}><MdArrowBack /> Volver</button>
+          <h2>Gestión de Personal</h2>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+          <button className="btn-primary" onClick={abrirModalNuevo}>+ Nuevo usuario</button>
+        </div>
+
+        {cargandoUsuarios ? <p>Cargando personal...</p> : (
+          <ul className="area-list">
+            {usuarios.map((user) => (
+              <li key={user.id} className="area-list-item">
+                <div className="area-info">
+                  <strong>{user.nombre} ({user.id_empleado})</strong>
+                  <span>{user.rol} · Área: {user.areaAsignada || '—'}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn-delete" onClick={() => abrirModalEditar(user)} title="Editar"><MdEdit /></button>
+                  {user.id !== 1 && <button className="btn-delete" onClick={() => eliminarUsuario(user.id, user.nombre)} title="Eliminar"><MdDelete /></button>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {modalAbierto && (
+          <div className="modal-overlay" onClick={cerrarModal}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+              <div className="modal-card__header">
+                <h2>{esEdicion ? 'Editar usuario' : 'Nuevo usuario'}</h2>
+                <button className="modal-card__close" onClick={cerrarModal}>&times;</button>
+              </div>
+              <form onSubmit={guardarUsuario} className="modal-card__body">
+                <div className="input-group-row" style={{ flexDirection: 'column' }}>
+                  <input type="text" name="id_empleado" placeholder="ID de empleado" value={formUsu.id_empleado} onChange={handleUsuChange} required disabled={esEdicion} />
+                  <input type="text" name="nombre" placeholder="Nombre completo" value={formUsu.nombre} onChange={handleUsuChange} required />
+                  <select name="rol" value={formUsu.rol} onChange={handleUsuChange}>
+                    {roles.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                  </select>
+                  <input type="password" name="password" placeholder={esEdicion ? 'Dejar igual (***)' : 'Contraseña'} value={formUsu.password} onChange={handleUsuChange} required={!esEdicion} />
+                </div>
+                <button type="submit" className="btn-primary btn-block" style={{ marginTop: '15px', width: '100%' }} disabled={guardandoUsu}>
+                  {guardandoUsu ? 'Guardando...' : 'Guardar'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -343,7 +206,7 @@ export default function ConfAvanz({ areasConfig, setAreasConfig, camiones, setCa
         <div className="config-option-card" onClick={() => setVistaActual('usuarios')}>
           <div className="config-option-icon"><MdPersonAdd /></div>
           <div className="config-option-text">
-            <h3>Agregar usuario</h3>
+            <h3>Gestión de Personal</h3>
             <p>Registra nuevos operadores, mecánicos o supervisores de patio.</p>
           </div>
         </div>

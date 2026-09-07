@@ -1,19 +1,19 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import './App.css'
 import Login from './pages/login/login.jsx'
 import DropDrag from './pages/Patio/DropDrag.jsx'
-import ProtectedRoute from './components/ProtectedRoute.jsx'
-import { useAuth } from './context/AuthContext.jsx'
 import { useIsMobile } from './lib/hooks/useIsMobile.js'
 import { LoginPage } from './lib/presentation/pages/LoginPage.jsx'
 import { PatioPage } from './lib/presentation/pages/PatioPage.jsx'
 
-function MobileApp() {
+// Sesión compartida por mobile y escritorio: mismo localStorage ('sesionAdo')
+// y mismo useAuthBloc (POST /login real) — antes DesktopApp usaba un stack
+// de auth paralelo (AuthContext/authService/react-router) que nunca llegó a
+// conectarse a la SCA API real.
+function useSesion() {
   const [usuarioActual, setUsuarioActual] = useState(null)
   const [verificandoSesion, setVerificandoSesion] = useState(true)
 
-  // Restaura la sesión guardada para que un F5 no regrese al login
   useEffect(() => {
     const sesionGuardada = localStorage.getItem('sesionAdo')
     if (sesionGuardada) {
@@ -26,60 +26,38 @@ function MobileApp() {
     setVerificandoSesion(false)
   }, [])
 
-  if (verificandoSesion) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc' }}>
-        <h2 style={{ color: '#6b21a8' }}>Cargando sistema...</h2>
-      </div>
-    )
+  const iniciarSesion = (datos) => {
+    localStorage.setItem('sesionAdo', JSON.stringify(datos))
+    setUsuarioActual(datos)
   }
 
-  if (!usuarioActual) {
-    return (
-      <LoginPage
-        onLoginSuccess={(datos) => {
-          localStorage.setItem('sesionAdo', JSON.stringify(datos))
-          setUsuarioActual(datos)
-        }}
-      />
-    )
-  }
+  const cerrarSesion = () => setUsuarioActual(null)
 
+  return { usuarioActual, verificandoSesion, iniciarSesion, cerrarSesion }
+}
+
+function PantallaCarga() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc' }}>
+      <h2 style={{ color: '#6b21a8' }}>Cargando sistema...</h2>
+    </div>
+  )
+}
+
+function MobileApp() {
+  const { usuarioActual, verificandoSesion, iniciarSesion } = useSesion()
+
+  if (verificandoSesion) return <PantallaCarga />
+  if (!usuarioActual) return <LoginPage onLoginSuccess={iniciarSesion} />
   return <PatioPage usuario={usuarioActual} />
 }
 
 function DesktopApp() {
-  const { isAuthenticated, loading } = useAuth()
+  const { usuarioActual, verificandoSesion, iniciarSesion, cerrarSesion } = useSesion()
 
-  if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <p>Cargando aplicación...</p>
-      </div>
-    )
-  }
-
-  return (
-    <Routes>
-      <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DropDrag />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
+  if (verificandoSesion) return <PantallaCarga />
+  if (!usuarioActual) return <Login onLoginSuccess={iniciarSesion} />
+  return <DropDrag usuario={usuarioActual} onLogout={cerrarSesion} />
 }
 
 function App() {

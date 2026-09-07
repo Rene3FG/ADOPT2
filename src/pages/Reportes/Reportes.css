@@ -1,17 +1,17 @@
-.reportes-panel {
+.ado-desktop-shell .reportes-panel {
   width: 100%;
   max-width: 950px;
   margin: 0 auto;
 }
 
-.reportes-header h2 {
+.ado-desktop-shell .reportes-header h2 {
   font-size: 24px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: #ffffff;
+  color: #0f172a;
 }
 
-.reportes-header p {
+.ado-desktop-shell .reportes-header p {
   color: #64748b;
   margin: 0 0 25px 0;
   font-size: 14px;
@@ -20,60 +20,62 @@
 /* =========================================
    TARJETAS DE INDICADORES (KPIs)
    ========================================= */
-.kpi-grid {
+.ado-desktop-shell .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 25px;
 }
 
-.kpi-card {
-  background-color: #11131e;
-  border: 1px solid #1e2235;
+.ado-desktop-shell .kpi-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.kpi-card:hover {
+.ado-desktop-shell .kpi-card:hover {
   transform: translateY(-3px);
-  border-color: #475569;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.kpi-icon {
+.ado-desktop-shell .kpi-icon {
   font-size: 24px;
-  color: #38bdf8; 
-  background: rgba(56, 189, 248, 0.08);
+  color: #0284c7; 
+  background: #f0f9ff;
   padding: 10px;
   border-radius: 10px;
   display: flex;
 }
 
-.kpi-card.completado .kpi-icon {
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.08);
+.ado-desktop-shell .kpi-card.completado .kpi-icon {
+  color: #059669;
+  background: #ecfdf5;
 }
 
-.kpi-card.proceso .kpi-icon {
+.ado-desktop-shell .kpi-card.proceso .kpi-icon {
   color: #e21c24;
-  background: rgba(226, 28, 36, 0.08);
+  background: #fef2f2;
 }
 
-.kpi-card.proceso:hover {
+.ado-desktop-shell .kpi-card.proceso:hover {
   border-color: #e21c24;
 }
 
-.kpi-info h3 {
+.ado-desktop-shell .kpi-info h3 {
   margin: 0;
   font-size: 22px;
-  color: #ffffff;
+  color: #0f172a;
   font-weight: 700;
 }
 
-.kpi-info p {
+.ado-desktop-shell .kpi-info p {
   margin: 2px 0 0 0;
   font-size: 12px;
   color: #64748b;
@@ -82,78 +84,80 @@
 /* =========================================
    TABLA DE REPORTES
    ========================================= */
-.table-container-rep {
-  background-color: #11131e;
-  border: 1px solid #1e2235;
+.ado-desktop-shell .table-container-rep {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.reportes-table {
+.ado-desktop-shell .reportes-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
   font-size: 14px;
 }
 
-.reportes-table th {
-  background-color: #161927;
-  color: #94a3b8;
+.ado-desktop-shell .reportes-table th {
+  background-color: #f8fafc;
+  color: #475569;
   font-weight: 600;
   padding: 16px 20px;
-  border-bottom: 1px solid #1e2235;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.reportes-table td {
+.ado-desktop-shell .reportes-table td {
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(30, 34, 53, 0.5);
-  color: #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
 }
 
-.reportes-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+.ado-desktop-shell .reportes-table tbody tr:hover {
+  background-color: #f8fafc;
 }
 
 /* =========================================
    ELEMENTOS INTERNOS DE LA TABLA
    ========================================= */
-.badge-bus-rep {
-  background-color: #161927;
-  border: 1px solid #1e2235;
-  color: #ffffff;
+.ado-desktop-shell .badge-bus-rep {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
   padding: 4px 10px;
   border-radius: 6px;
   font-weight: 700;
 }
 
-.driver-cell {
+.ado-desktop-shell .driver-cell {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.driver-icon {
+.ado-desktop-shell .driver-icon {
   color: #64748b;
   font-size: 16px;
 }
 
-.time-in {
-  color: #10b981;
+.ado-desktop-shell .time-in {
+  color: #059669;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.ado-desktop-shell .time-out {
+  color: #64748b;
   font-family: monospace;
 }
 
-.time-out {
-  color: #94a3b8;
-  font-family: monospace;
-}
-
-.time-out.text-anim {
-  color: #eab308;
+.ado-desktop-shell .time-out.text-anim {
+  color: #d97706;
   font-style: italic;
+  font-weight: 500;
 }
 
-.status-badge {
+.ado-desktop-shell .status-badge {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 11px;
@@ -162,116 +166,108 @@
   text-transform: uppercase;
 }
 
-.status-badge.listo {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+.ado-desktop-shell .status-badge.listo {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
 }
 
-.status-badge.proceso {
-  background-color: rgba(226, 28, 36, 0.1);
+.ado-desktop-shell .status-badge.proceso {
+  background-color: #fef2f2;
   color: #e21c24; /* Rojo ADO */
-  border: 1px solid rgba(226, 28, 36, 0.2);
+  border: 1px solid #fecaca;
 }
 
-.no-reportes {
+.ado-desktop-shell .no-reportes {
   text-align: center;
   padding: 60px 20px;
   color: #64748b;
-  background-color: #11131e;
-  border: 1px dashed #1e2235;
+  background-color: #ffffff;
+  border: 1px dashed #cbd5e1;
   border-radius: 12px;
   font-size: 15px;
 }
 
-.badge-amarillo {
-  background-color: rgba(255, 193, 7, 0.15); 
-  color: #ffc107; 
+.ado-desktop-shell .badge-verde {
+  background-color: #ecfdf5; 
+  color: #15803d; 
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: bold;
-  border: 1px solid #ffc107;
-}
-
-.badge-verde {
-  background-color: rgba(40, 167, 69, 0.15); 
-  color: #28a745; 
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-  border: 1px solid #28a745;
+  border: 1px solid #86efac;
   display: inline-block;
   text-align: center;
   min-width: 100px;
 }
 
-.badge-rojo {
-  background-color: rgba(220, 53, 69, 0.15); 
-  color: #dc3545; 
+.ado-desktop-shell .badge-rojo {
+  background-color: #fef2f2; 
+  color: #b91c1c; 
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: bold;
-  border: 1px solid #dc3545;
+  border: 1px solid #fca5a5;
   display: inline-block;
   text-align: center;
   min-width: 100px;
 }
 
-.badge-amarillo {
-  background-color: rgba(255, 193, 7, 0.15); 
-  color: #ffc107; 
+.ado-desktop-shell .badge-amarillo {
+  background-color: #fefce8; 
+  color: #a16207; 
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: bold;
-  border: 1px solid #ffc107;
+  border: 1px solid #fde047;
   display: inline-block;
   text-align: center;
   min-width: 100px;
 }
 
-.progress-bar-bg {
-  background-color: #e9ecef;
+.ado-desktop-shell .progress-bar-bg {
+  background-color: #e2e8f0;
   border-radius: 6px;
   height: 14px;
   width: 100%;
 }
-.progress-bar-fill {
-  background-color: #d32f2f;
+
+.ado-desktop-shell .progress-bar-fill {
+  background-color: #e21c24;
   height: 100%;
   border-radius: 6px;
   transition: width 0.3s ease;
 }
 
-/* --- ESTRUCTURA DE LA TABLA --- */
-.tabla-reportes {
+/* --- ESTRUCTURA DE LA TABLA SECUNDARIA --- */
+.ado-desktop-shell .tabla-reportes {
   width: 100%;
   border-collapse: collapse;
-  background-color: #151a26; /* Fondo de tu tarjeta */
-  color: #e5e7eb;
+  background-color: #ffffff;
+  color: #1e293b;
 }
 
-/* Forzamos a que el texto NO brinque de línea */
-.tabla-reportes th, 
-.tabla-reportes td {
+.ado-desktop-shell .tabla-reportes th, 
+.ado-desktop-shell .tabla-reportes td {
   padding: 16px 20px;
   text-align: left;
-  white-space: nowrap; /* 🌟 Esta es la magia para que el texto no se aplaste */
-  border-bottom: 1px solid #1f2937; /* Línea separadora sutil */
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.tabla-reportes th {
-  color: #9ca3af; /* Letra un poco más gris para las cabeceras */
-  font-weight: normal;
+.ado-desktop-shell .tabla-reportes th {
+  color: #475569;
+  font-weight: 600;
   font-size: 14px;
+  background-color: #f8fafc;
 }
 
 /* --- COLUMNA DE PROGRESO --- */
-.th-progreso {
+.ado-desktop-shell .th-progreso {
   text-align: right !important;
   padding-right: 40px !important;
 }
 
-.progreso-celda-container {
+.ado-desktop-shell .progreso-celda-container {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -279,24 +275,24 @@
   padding-right: 15px;
 }
 
-.barra-progreso-fondo {
-  background-color: #222b3c;
+.ado-desktop-shell .barra-progreso-fondo {
+  background-color: #e2e8f0;
   border-radius: 4px;
   width: 70px;
   height: 6px;
   overflow: hidden;
 }
 
-.barra-progreso-relleno {
-  background: linear-gradient(90deg, #3b82f6, #10b981);
+.ado-desktop-shell .barra-progreso-relleno {
+  background: linear-gradient(90deg, #2563eb, #10b981);
   height: 100%;
   transition: width 0.4s ease;
 }
 
-.porcentaje-texto {
+.ado-desktop-shell .porcentaje-texto {
   font-weight: 600;
   font-size: 14px;
-  color: #ffffff;
+  color: #0f172a;
   min-width: 35px;
   text-align: right;
 }

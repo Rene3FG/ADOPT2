@@ -1,4 +1,7 @@
-:root {
+/* Escopado a .ado-desktop-login (no :root/body) para no pisar las variables
+   y el fondo globales que ya usan la vista mobile y el resto de pestañas
+   del escritorio — ambos hojas de estilo conviven en el mismo bundle. */
+.ado-desktop-login {
   --primary: #5B177F;
   --danger: #C62828;
 
@@ -9,15 +12,14 @@
   --text-secondary: #6B7280;
 
   --border: #D1D5DB;
-}
 
-body {
-  margin: 0;
+  display: block;
+  min-height: 100vh;
   font-family: Inter, sans-serif;
   background-color: var(--background);
 }
 
-.top-bar {
+.ado-desktop-login .top-bar {
   height: 70px;
   background-color: var(--primary);
   border-bottom: 3px solid var(--danger);
@@ -28,37 +30,37 @@ body {
   padding: 0 24px;
 }
 
-.header-content {
+.ado-desktop-login .header-content {
   display: flex;
   align-items: center;
   gap: 12px;
   color: white;
 }
 
-.header-content h2 {
+.ado-desktop-login .header-content h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
 }
 
-.header-content p {
+.ado-desktop-login .header-content p {
   margin: 0;
   font-size: 13px;
   opacity: 0.9;
 }
 
-.mini-bus {
+.ado-desktop-login .mini-bus {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mini-bus svg {
+.ado-desktop-login .mini-bus svg {
   color: white;
   font-size: 24px;
 }
 
-.login-container {
+.ado-desktop-login .login-container {
   min-height: calc(100vh - 70px);
 
   display: flex;
@@ -66,7 +68,7 @@ body {
   align-items: center;
 }
 
-.login-card {
+.ado-desktop-login .login-card {
   width: 420px;
 
   background: white;
@@ -80,7 +82,7 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-.bus-icon {
+.ado-desktop-login .bus-icon {
   width: 70px;
   height: 70px;
 
@@ -95,19 +97,19 @@ body {
   margin: 0 auto 24px auto;
 }
 
-.bus-svg {
+.ado-desktop-login .bus-svg {
   color: white;
   font-size: 25px;
 }
 
-.login-card h1 {
+.ado-desktop-login .login-card h1 {
   margin: 0;
   color: var(--text-primary);
   font-size: 42px;
   font-weight: 700;
 }
 
-.subtitle {
+.ado-desktop-login .subtitle {
   color: var(--text-secondary);
 
   margin-top: 12px;
@@ -116,11 +118,11 @@ body {
   font-size: 16px;
 }
 
-.input-group {
+.ado-desktop-login .input-group {
   text-align: left;
 }
 
-.input-group label {
+.ado-desktop-login .input-group label {
   display: block;
 
   margin-bottom: 8px;
@@ -133,7 +135,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-.input-group input {
+.ado-desktop-login .input-group input {
   width: 100%;
 
   box-sizing: border-box;
@@ -150,12 +152,12 @@ body {
   color: var(--text-primary);
 }
 
-.input-group input:focus {
+.ado-desktop-login .input-group input:focus {
   outline: none;
   border-color: var(--primary);
 }
 
-.login-button {
+.ado-desktop-login .login-button {
   width: 100%;
 
   margin-top: 20px;
@@ -176,11 +178,11 @@ body {
   cursor: pointer;
 }
 
-.login-button:hover {
+.ado-desktop-login .login-button:hover {
   opacity: 0.95;
 }
 
-.help-text {
+.ado-desktop-login .help-text {
   margin-top: 20px;
 
   color: var(--text-secondary);
@@ -190,7 +192,7 @@ body {
   line-height: 1.5;
 }
 
-.input-group {
+.ado-desktop-login .input-group {
   text-align: left;
   margin-bottom: 18px;
 }

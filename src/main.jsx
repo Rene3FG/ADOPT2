@@ -1,9 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
-import { AuthProvider } from './context/AuthContext.jsx'
 import '@fontsource/inter'
 
 // Despierta el backend en Render (free tier se duerme a los 15 min sin
@@ -14,10 +12,6 @@ fetch(`${import.meta.env.VITE_API_URL || 'https://ado-project.onrender.com'}/are
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <App />
   </StrictMode>,
 )

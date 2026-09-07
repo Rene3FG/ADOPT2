@@ -1,11 +1,16 @@
-import "./Reportes.css";
-import { MdBarChart, MdAssignmentTurnedIn, MdTimeline, MdPeople } from "react-icons/md";
+// src/pages/Reportes/Reportes.jsx — panel de reportes de escritorio.
+// El tablero de KPIs/tabla usa los autobuses activos en tiempo real
+// (usePatioBloc, vía props); la exportación PDF/CSV reutiliza el
+// useReportesBloc real (misma bitácora que ReportesPage.jsx en mobile).
+import { MdBarChart, MdPeople, MdTimeline, MdWarningAmber } from 'react-icons/md';
+import { useReportesBloc } from '../../lib/logic/useReportesBloc.js';
+import './Reportes.css';
 
-export default function Reportes({ datos }) {
+export default function Reportes({ autobuses = [], obtenerSemaforo }) {
+  const { fechaInicio, setFechaInicio, fechaFin, setFechaFin, cargando, error, generarPDF, generarCSV } = useReportesBloc();
 
-  const totalUnidades = datos.length;
-  const completados = datos.filter(d => d.horaSalida !== "En proceso...").length;
-  const enProceso = totalUnidades - completados;
+  const enProceso = autobuses.filter((b) => b.estadoServicio === 'En Proceso').length;
+  const conRetraso = obtenerSemaforo ? autobuses.filter((b) => obtenerSemaforo(b)?.color === 'rojo').length : 0;
 
   return (
     <div className="reportes-panel">
@@ -14,134 +19,91 @@ export default function Reportes({ datos }) {
         <p>Análisis de tiempos de estancia y productividad por unidad vehicular.</p>
       </div>
 
-      {/* Tarjetas de Indicadores Rápidos (KPIs) */}
       <div className="kpi-grid">
         <div className="kpi-card">
           <div className="kpi-icon"><MdTimeline /></div>
-          <div className="kpi-info">
-            <h3>{totalUnidades}</h3>
-            <p>Unidades Totales</p>
-          </div>
+          <div className="kpi-info"><h3>{autobuses.length}</h3><p>Unidades en Patio</p></div>
         </div>
         <div className="kpi-card completado">
-          <div className="kpi-icon"><MdAssignmentTurnedIn /></div> 
-          <div className="kpi-info">
-            <h3>{completados}</h3>
-            <p>Ciclos Completados</p>
-          </div>
+          <div className="kpi-icon"><MdBarChart /></div>
+          <div className="kpi-info"><h3>{enProceso}</h3><p>En Proceso</p></div>
         </div>
         <div className="kpi-card proceso">
-          <div className="kpi-icon"><MdBarChart /></div>
-          <div className="kpi-info">
-            <h3>{enProceso}</h3>
-            <p>En Flujo Activo</p>
-          </div>
+          <div className="kpi-icon"><MdWarningAmber /></div>
+          <div className="kpi-info"><h3>{conRetraso}</h3><p>Con Retraso</p></div>
         </div>
       </div>
 
-      {/* Tabla Principal de Reportes */}
-      {datos.length === 0 ? (
-        <div className="no-reportes">No hay registros analíticos disponibles.</div>
+      {autobuses.length === 0 ? (
+        <div className="no-reportes">No hay unidades activas en el patio.</div>
       ) : (
         <div className="table-container-rep">
-
-          <div style={{ overflowX: 'auto', width: '100%', paddingBottom: '10px' }}>
-            <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse', color: '#e5e7eb', textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="reportes-table">
               <thead>
-                <tr style={{ borderBottom: '1px solid #1f2937' }}>
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal' }}>ID Autobús</th>
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal' }}>Conductor</th>
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal' }}>Hora Entrada al Flujo</th>
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal' }}>Hora Salida / Liberación</th>
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal' }}>Estatus</th>
-                  {/* minWidth: '120px' para que la palabra Progreso nunca se aplaste */}
-                  <th style={{ padding: '16px', whiteSpace: 'nowrap', color: '#9ca3af', fontWeight: 'normal', textAlign: 'right', minWidth: '120px' }}>Progreso</th>
+                <tr>
+                  <th>Unidad</th>
+                  <th>Conductor</th>
+                  <th>Área Actual</th>
+                  <th>Hora de Salida</th>
+                  <th>Estado</th>
+                  <th style={{ textAlign: 'right' }}>Avance</th>
                 </tr>
               </thead>
               <tbody>
-                {datos.map((item) => {
-                  
-                  let colorBorde = '#10b981'; // Verde por defecto (En Flujo / En Patio)
-                  let colorFondo = 'rgba(16, 185, 129, 0.1)';
-                  let colorTexto = '#10b981';
-
-                  if (item.estado === 'En descanso' || item.estado === 'Finalizado') {
-                    colorBorde = '#f59e0b'; // Amarillo/Naranja
-                    colorFondo = 'rgba(245, 158, 11, 0.1)';
-                    colorTexto = '#f59e0b';
-                  } else if (item.estado === 'Completado') {
-                    colorBorde = '#3b82f6'; // Azul
-                    colorFondo = 'rgba(59, 130, 246, 0.1)';
-                    colorTexto = '#3b82f6';
-                  }
-
-                  return (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #1f2937' }}>
-                      
-                      {/* Recuadro oscuro para el ID del Autobús */}
-                      <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>
-                        <span style={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                          border: '1px solid rgba(255, 255, 255, 0.1)', 
-                          padding: '6px 12px', 
-                          borderRadius: '6px', 
-                          fontWeight: '600' 
-                        }}>
-                          {item.codigo}
-                        </span>
-                      </td>
-                      
-                      {/* Conductor con su icono morado */}
-                      <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: '#8b5cf6', fontSize: '16px' }}>
-                            <MdPeople />
-                          </span>
-                          <span>{item.conductor || "Sin conductor asignado"}</span>
+                {autobuses.map((bus) => (
+                  <tr key={bus.busId}>
+                    <td><span className="badge-bus-rep">{bus.busId}</span></td>
+                    <td>
+                      <div className="driver-cell">
+                        <MdPeople className="driver-icon" />
+                        <span>{bus.conductor || 'Sin asignar'}</span>
+                      </div>
+                    </td>
+                    <td>{bus.currentArea}</td>
+                    <td className={bus.isPriority ? 'time-out text-anim' : 'time-out'}>{bus.departureTime}</td>
+                    <td>
+                      <span className={`status-badge ${bus.estadoServicio === 'En Proceso' ? 'proceso' : 'listo'}`}>
+                        {bus.estadoServicio}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="progreso-celda-container">
+                        <div className="barra-progreso-fondo">
+                          <div className="barra-progreso-relleno" style={{ width: `${bus.progressPercentage}%` }}></div>
                         </div>
-                      </td>
-                      
-                      <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{item.horaEntrada}</td>
-                      
-                      <td style={{ padding: '16px', whiteSpace: 'nowrap', color: item.horaSalida === 'En proceso...' ? '#f59e0b' : '#e5e7eb', fontStyle: item.horaSalida === 'En proceso...' ? 'italic' : 'normal' }}>
-                        {item.horaSalida}
-                      </td>
-                      
-                      {/* Recuadro de color estilo neón para el Estatus */}
-                      <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>
-                        <span style={{ 
-                          backgroundColor: colorFondo, 
-                          border: `1px solid ${colorBorde}`, 
-                          color: colorTexto, 
-                          padding: '6px 12px', 
-                          borderRadius: '6px', 
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          letterSpacing: '0.5px'
-                        }}>
-                          {item.estado.toUpperCase()}
-                        </span>
-                      </td>
-                      
-                      {/* Celda de la Barra de Progreso */}
-                      <td style={{ padding: '16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
-                          <div style={{ backgroundColor: '#222b3c', borderRadius: '4px', width: '70px', height: '6px', overflow: 'hidden', flexShrink: 0 }}>
-                            <div style={{ background: 'linear-gradient(90deg, #3b82f6, #10b981)', height: '100%', width: `${item.progreso}%`, transition: 'width 0.4s ease' }}></div>
-                          </div>
-                          <span style={{ fontWeight: 'bold', fontSize: '14px', minWidth: '35px', textAlign: 'right' }}>{item.progreso}%</span>
-                        </div>
-                      </td>
-
-                    </tr>
-                  );
-                })}
+                        <span className="porcentaje-texto">{bus.progressPercentage}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-
         </div>
       )}
+
+      <div className="table-container-rep" style={{ marginTop: '25px', padding: '20px' }}>
+        <h3 style={{ margin: '0 0 4px 0', fontSize: '15px' }}>Exportar bitácora de movimientos</h3>
+        <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#64748b' }}>Para auditoría o contabilidad, por rango de fechas.</p>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div className="input-group" style={{ minWidth: '160px' }}>
+            <label>Fecha Inicio</label>
+            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} disabled={cargando} />
+          </div>
+          <div className="input-group" style={{ minWidth: '160px' }}>
+            <label>Fecha Fin</label>
+            <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} disabled={cargando} />
+          </div>
+          <button className="btn-secondary" disabled={cargando} onClick={generarCSV}>
+            {cargando ? 'Procesando...' : '📄 Exportar CSV'}
+          </button>
+          <button className="btn-primary" disabled={cargando} onClick={generarPDF}>
+            {cargando ? 'Generando...' : '📥 Generar PDF'}
+          </button>
+        </div>
+        {error && <p style={{ color: 'var(--primary)', fontWeight: 600, marginTop: '10px' }}>⚠️ {error}</p>}
+      </div>
     </div>
   );
 }

@@ -1,438 +1,143 @@
+// src/pages/Patio/DropDrag.jsx — shell de escritorio (rediseño de Rosaura).
+// Sustituye el mock local (CamionArea.json) por los mismos BLoCs/repositorios
+// reales que ya usa la vista mobile (PatioPage.jsx), para no duplicar lógica
+// de negocio: usePatioBloc resuelve datos/NFC/semáforos contra la SCA API.
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import TarjetaInfo from './TarjetaInfo.jsx';
 import './DropDrag.css';
+import '../shared/desktop-shared.css';
 import Registro from '../Registro/Registro.jsx';
 import ConfAvaz from '../ConfAvanz/ConfAvaz.jsx';
 import Reportes from '../Reportes/Reportes.jsx';
-import BusDetailModal from '../../components/BusDetailModal.jsx';
-import Toast from '../../components/Toast.jsx';
-import camionesService from '../../services/camionesService.js';
-import areasService from '../../services/areasService.js';
-import historialService from '../../services/historialService.js';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { HistorialPage } from '../../lib/presentation/pages/HistorialPage.jsx';
+import { usePatioBloc } from '../../lib/logic/usePatioBloc.js';
+import { useMenuBloc } from '../../lib/logic/useMenuBloc.js';
+import { AreaRepository } from '../../lib/data/repositories/AreaRepository.js';
+import { AREAS_PATIO } from '../../lib/areasConfig.js';
 
-import { MdDashboard, MdAssignmentTurnedIn, MdSwapHoriz, MdHistory, MdBarChart, MdSettings, MdExitToApp } from "react-icons/md";
-import { TbWash, TbWashDryDip } from "react-icons/tb";
-import { BsFillFuelPumpDieselFill } from "react-icons/bs";
-import { CiDroplet } from "react-icons/ci";
-import { MdLocalCarWash } from "react-icons/md";
-import { HiMiniWrenchScrewdriver } from "react-icons/hi2";
-import { SiBlockbench } from "react-icons/si";
-import { MdAddAlert } from "react-icons/md";
+import { MdDashboard, MdAssignmentTurnedIn, MdHistory, MdBarChart, MdSettings, MdExitToApp, MdAddAlert } from 'react-icons/md';
+import { TbWash, TbWashDryDip } from 'react-icons/tb';
+import { BsFillFuelPumpDieselFill } from 'react-icons/bs';
+import { CiDroplet } from 'react-icons/ci';
+import { HiMiniWrenchScrewdriver } from 'react-icons/hi2';
 
-const areaIcons = {
-  "Desfogue": <TbWash />,
-  "Diesel": <BsFillFuelPumpDieselFill />,
-  "Ad-Blue": <CiDroplet />,
-  "Lavado Exterior": <MdLocalCarWash />,
-  "Lavado Interior": <TbWashDryDip />,
-  "Taller": <HiMiniWrenchScrewdriver />,
-  "Descanso": <SiBlockbench />
+const AREA_ICONS = {
+  'Desfogue': <TbWash />,
+  'Diesel': <BsFillFuelPumpDieselFill />,
+  'Ad-blue': <CiDroplet />,
+  'Lavado Exterior': <TbWashDryDip />,
+  'Lavado Interior': <TbWashDryDip />,
+  'Taller': <HiMiniWrenchScrewdriver />,
+  'Espera': <MdDashboard />,
 };
 
-export default function DropDrag() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+// Mismo orden canónico que WORKFLOW_ORDER en useRegistroBloc.js y en
+// routing.py (backend) — se usa solo para avisar de un flujo fuera de orden
+// al soltar la tarjeta, el backend es quien de verdad valida en /avanzar.
+const WORKFLOW_ORDER = ['Desfogue', 'Diesel', 'Ad-blue', 'Taller', 'Lavado Interior', 'Lavado Exterior'];
 
-  const esAdmin = user?.rol === 'Administrador';
-  const esSupervisor = user?.rol === 'Supervisor';
+function siguienteAreaEsperada(bus) {
+  const ruta = [...WORKFLOW_ORDER.filter((a) => bus.requiredAreas.includes(a)), 'Salida'];
+  const i = ruta.indexOf(bus.currentArea);
+  return i === -1 ? ruta[0] : (ruta[i + 1] ?? 'Salida');
+}
 
+export default function DropDrag({ usuario, onLogout }) {
   const [pestanaActiva, setPestanaActiva] = useState('patio');
-  const [camiones, setCamiones] = useState([]);
-  const [areasConfig, setAreasConfig] = useState([]);
-  const [historial, setHistorial] = useState([]);
-  const [alertas, setAlertas] = useState([]);
   const [camionSeleccionado, setCamionSeleccionado] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [toast, setToast] = useState(null);
+  const [movimientoPendiente, setMovimientoPendiente] = useState(null);
+  const [tagPendiente, setTagPendiente] = useState(null);
 
-  // Cargar datos iniciales desde la API
+  const [areas, setAreas] = useState(AREAS_PATIO);
+
+  const {
+    autobuses, cargando, cargarAutobuses,
+    confirmarMovimientoDirecto, avanzarBus, arrancarServicio,
+    obtenerSemaforo, obtenerOcupacion, moviendo
+  } = usePatioBloc();
+
+  const { ejecutarCerrarSesion } = useMenuBloc();
+
   useEffect(() => {
-    const cargarDatos = async () => {
-      setLoading(true);
-      setError("");
-
-      const mockDB = (await import('./CamionArea.json')).default;
-
-      const [resC, resA, resH] = await Promise.allSettled([
-        camionesService.getAllCamiones(),
-        areasService.getAllAreas(),
-        historialService.getHistorial(),
-      ]);
-
-      const camionesData = resC.status === 'fulfilled' && Array.isArray(resC.value)
-        ? resC.value
-        : mockDB.camiones;
-
-      const areasData = resA.status === 'fulfilled' && Array.isArray(resA.value)
-        ? resA.value
-        : mockDB.areas;
-
-      const historialData = resH.status === 'fulfilled' && Array.isArray(resH.value)
-        ? resH.value
-        : [];
-
-      if (resC.status === 'rejected') console.warn('Camiones API no disponible, usando mock:', resC.reason?.message);
-      if (resA.status === 'rejected') console.warn('Areas API no disponible, usando mock:', resA.reason?.message);
-
-      setCamiones(camionesData);
-      setAreasConfig(areasData);
-      setHistorial(historialData);
-      setLoading(false);
+    let activo = true;
+    const cargarAreas = async () => {
+      try {
+        const espera = AREAS_PATIO.find((a) => a.id === 'Espera');
+        const lista = await AreaRepository.listar();
+        if (activo) setAreas(espera ? [...lista, espera] : lista);
+      } catch (error) {
+        console.error('No se pudieron cargar las áreas:', error);
+      }
     };
-
-    cargarDatos();
+    cargarAreas();
+    const intervalo = setInterval(cargarAreas, 30000);
+    return () => { activo = false; clearInterval(intervalo); };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    setToast({
-      message: 'Sesión cerrada correctamente',
-      type: 'success'
-    });
-    setTimeout(() => {
-      navigate('/login');
-    }, 500);
-  };
+  const esAdmin = usuario?.rol === 'Administrador';
+  const esSupervisor = usuario?.rol === 'Supervisor';
 
-  const agregarCamion = (nuevoCamion) => {
-    const areaDestino = nuevoCamion.area;
-    if (areaDestino && areaDestino !== 'Descanso') {
-      const infoArea = areasConfig.find(a => a.id === areaDestino);
-      const capacidad = infoArea ? infoArea.capacidad : 4;
-      const actual = camiones.filter(c => c.area === areaDestino).length;
-      if (actual >= capacidad) {
-        setToast({ message: `Área "${areaDestino}" llena (máx ${capacidad}). Elige otra área.`, type: 'error' });
-        return;
-      }
-    }
-    setCamiones((prev) => [...prev, nuevoCamion]);
-    setToast({
-      message: 'Autobús agregado exitosamente',
-      type: 'success'
-    });
-  };
+  const alIniciarArrastre = (e, busId) => e.dataTransfer.setData('text/plain', String(busId));
+  const permitirSoltar = (e) => e.preventDefault();
 
-  const [movimientoPendiente, setMovimientoPendiente] = useState(null);
-
-  const crearAlerta = async (alertaNueva) => {
-    setAlertas((prev) => [...prev, alertaNueva]);
-    const ahora = new Date();
-
-    const registroAlerta = {
-      id: Date.now(),
-      tipo: "alerta",
-      unidad: alertaNueva.autobus,
-      fecha: ahora.toLocaleDateString('es-MX'),
-      hora: ahora.toLocaleTimeString('es-MX'),
-      mensaje: `Alerta: la unidad ${alertaNueva.autobus} excedió el tiempo permitido en ${alertaNueva.area}`
-    };
-
-    setHistorial(prev => [registroAlerta, ...prev]);
-
-    // Log alerta en API
+  const ejecutarMovimiento = async (busId, nuevaAreaId) => {
+    const bus = autobuses.find((b) => String(b.busId) === String(busId));
+    if (!bus) return;
     try {
-      await historialService.logAlerta(registroAlerta);
-    } catch (err) {
-      console.error("Error logging alerta:", err);
+      await confirmarMovimientoDirecto(bus, nuevaAreaId);
+    } catch (error) {
+      alert(error.message || 'Error al mover la unidad.');
     }
-
-    setTimeout(() => {
-      setAlertas((prev) =>
-        prev.filter((alerta) => alerta !== alertaNueva)
-      );
-    }, 5000);
-  };
-
-  const sacarCamion = async (idCamion) => {
-    const camion = camiones.find(c => c.id === idCamion);
-
-    if (!camion) return;
-
-    const ahora = new Date();
-    const horaSalidaTexto = ahora.toLocaleTimeString('es-MX');
-
-    const registroSalida = {
-      id: Date.now(),
-      unidad: camion.codigo,
-      areaFinal: camion.area,
-      fecha: ahora.toLocaleDateString('es-MX'),
-      hora: horaSalidaTexto,
-      mensaje: `La unidad ${camion.codigo} salió de la terminal ADO`
-    };
-
-    setHistorial(prev => [registroSalida, ...prev]);
-
-    // Actualizar en API
-    try {
-      await camionesService.sacarCamion(idCamion);
-      await historialService.logSalida(registroSalida);
-      setToast({
-        message: `Unidad ${camion.codigo} ha salido`,
-        type: 'success'
-      });
-    } catch (err) {
-      console.error("Error updating camion en API:", err);
-      setToast({
-        message: 'Error al registrar salida',
-        type: 'error'
-      });
-    }
-
-    setCamiones(prev =>
-      prev.map(c =>
-        c.id === idCamion
-          ? { ...c, area: "Fuera", horaSalidaTerminal: horaSalidaTexto }
-          : c
-      )
-    );
-  };
-
-  const mandarADescanso = async (idCamion) => {
-    const camion = camiones.find(c => c.id === idCamion);
-    if (!camion) return;
-
-    // 1. Validamos que el área de Descanso no esté llena
-    const infoDescanso = areasConfig.find(a => a.id === "Descanso");
-    const limiteDescanso = infoDescanso ? infoDescanso.capacidad : 4;
-    const camionesEnDescanso = camiones.filter(c => c.area === "Descanso").length;
-
-    if (camionesEnDescanso >= limiteDescanso) {
-      alert(`No hay espacio. El área de Descanso está llena (${limiteDescanso}/${limiteDescanso}).`);
-      return;
-    }
-
-    const ahora = new Date();
-
-    const registroDescanso = {
-      id: Date.now(),
-      tipo: "movimiento",
-      unidad: camion.codigo,
-      fecha: ahora.toLocaleDateString('es-MX'),
-      hora: ahora.toLocaleTimeString('es-MX'),
-      mensaje: `La unidad ${camion.codigo} terminó su ruta y pasó a Descanso`
-    };
-
-    setHistorial(prev => [registroDescanso, ...prev]);
-
-    // Actualizar en API
-    try {
-      await camionesService.moveCamionToArea(idCamion, "Descanso");
-      await camionesService.finalizarCamion(idCamion);
-      await historialService.logMovimiento(registroDescanso);
-    } catch (err) {
-      console.error("Error mandando camion a Descanso en API:", err);
-    }
-
-    setCamiones(prev =>
-      prev.map(c =>
-        c.id === idCamion
-          ? { ...c, area: "Descanso", finalizado: true }
-          : c
-      )
-    );
-  };
-
-  const agregarHistorial = (registro) => {
-    setHistorial(prev => [registro, ...prev]);
-  };
-
-  const alIniciarArrastre = (e, idCamion) => {
-    e.dataTransfer.setData('text/plain', idCamion);
-  };
-
-  const permitirSoltar = (e) => {
-    e.preventDefault();
-  };
-
-  // Esta función mueve el camión de verdad (ya sea por el camino feliz o forzado por el usuario)
-  const ejecutarMovimiento = async (idCamion, nuevaAreaId, esForzado = false) => {
-    // 1. Validar límite de capacidad primero (esto sí es un bloqueo estricto)
-    const infoAreaDestino = areasConfig.find(a => a.id === nuevaAreaId);
-    const limiteMaximoArea = infoAreaDestino ? infoAreaDestino.capacidad : 4;
-    const camionesEnAreaDestino = camiones.filter(c => c.area === nuevaAreaId).length;
-
-    if (camionesEnAreaDestino >= limiteMaximoArea) {
-      alert(`Bloqueo: El área de ${nuevaAreaId} está llena (${limiteMaximoArea} lugares).`);
-      return;
-    }
-
-    // 2. Mover el camión
-    const camionesActualizados = camiones.map((camion) => {
-      if (camion.id === idCamion) {
-        return { ...camion, area: nuevaAreaId };
-      }
-      return { ...camion };
-    });
-
-    const camionMovido = camiones.find(c => c.id === idCamion);
-
-    if (camionMovido) {
-      const ahora = new Date();
-
-      const registroMovimiento = {
-        id: Date.now(),
-        tipo: "movimiento",
-        unidad: camionMovido.codigo,
-        fecha: ahora.toLocaleDateString('es-MX'),
-        hora: ahora.toLocaleTimeString('es-MX'),
-        mensaje: `La unidad ${camionMovido.codigo} fue movida de ${camionMovido.area} a ${nuevaAreaId}${esForzado ? ' (desvío forzado)' : ''}`
-      };
-
-      setHistorial(prev => [registroMovimiento, ...prev]);
-
-      // Registrar movimiento en API
-      try {
-        if (esForzado) {
-          await camionesService.reubicacionForzada(idCamion, nuevaAreaId);
-        } else {
-          await camionesService.moveCamionToArea(idCamion, nuevaAreaId);
-        }
-        await historialService.logMovimiento(registroMovimiento);
-      } catch (err) {
-        console.error("Error updating camion movement en API:", err);
-      }
-    }
-
-    setCamiones(camionesActualizados);
   };
 
   const alSoltar = (e, nuevaAreaId) => {
     e.preventDefault();
-    const idCamion = e.dataTransfer.getData('text/plain');
+    const busId = e.dataTransfer.getData('text/plain');
+    const bus = autobuses.find((b) => String(b.busId) === String(busId));
+    if (!bus || bus.currentArea === nuevaAreaId) return;
 
-    const camionQueSeMueve = camiones.find(c => c.id === idCamion);
-    if (!camionQueSeMueve) return;
-    
-    const areaActual = camionQueSeMueve.area;
-    if (areaActual === nuevaAreaId) return;
-
-    let advertenciaFlujo = null;
-
-    // Evaluamos si está rompiendo las reglas
-    if (camionQueSeMueve.ruta && camionQueSeMueve.ruta.length > 0) {
-      if (camionQueSeMueve.finalizado) {
-        if (nuevaAreaId !== "Descanso") {
-          advertenciaFlujo = `La unidad ${camionQueSeMueve.codigo} ya completó su ciclo. ¿Seguro que deseas moverla a "${nuevaAreaId}" en lugar de enviarla a Descanso?`;
-        }
-      } else {
-        const indiceActual = camionQueSeMueve.ruta.indexOf(areaActual);
-        const siguienteAreaEsperada = camionQueSeMueve.ruta[indiceActual + 1];
-        if (nuevaAreaId !== siguienteAreaEsperada) {
-          advertenciaFlujo = `La unidad ${camionQueSeMueve.codigo} tiene asignado ir a "${siguienteAreaEsperada || 'Completar ciclo'}". ¿Deseas forzar su desvío a "${nuevaAreaId}"?`;
-        }
-      }
-    } else {
-      // Reglas para camiones sin ruta
-      const reglasFlujo = {
-        "Desfogue": ["Diesel", "Ad-Blue","Descanso"], 
-        "Diesel": ["Ad-Blue","Descanso"],
-        "Ad-Blue": ["Lavado Interior","Lavado Exterior","Taller","Descanso"],
-        "Lavado Exterior": ["Lavado Interior","Taller","Descanso"], 
-        "Lavado Interior": ["Lavado Exterior", "Taller","Descanso"],
-        "Taller": ["Lavado Exterior", "Lavado Interior","Descanso"],
-        "Descanso": ["Desfogue"] 
-      };
-
-      const movimientosPermitidos = reglasFlujo[areaActual] || [];
-      if (!movimientosPermitidos.includes(nuevaAreaId)) {
-        advertenciaFlujo = `Movimiento inusual. Un autobús en "${areaActual}" normalmente va a: ${movimientosPermitidos.join(" o ")}. ¿Forzar traslado a "${nuevaAreaId}"?`;
-      }
+    const infoAreaDestino = areas.find((a) => a.id === nuevaAreaId);
+    const limite = infoAreaDestino?.capacidad ?? 4;
+    if (obtenerOcupacion(nuevaAreaId) >= limite) {
+      alert(`No hay espacio. El área de ${nuevaAreaId} está llena (${limite}/${limite}).`);
+      return;
     }
 
-    if (advertenciaFlujo) {
+    const esperada = siguienteAreaEsperada(bus);
+    if (nuevaAreaId !== esperada) {
       setMovimientoPendiente({
-        idCamion: idCamion,
-        nuevaAreaId: nuevaAreaId,
-        mensaje: advertenciaFlujo
+        busId,
+        nuevaAreaId,
+        mensaje: `Flujo incorrecto: la unidad ${bus.busId} debería ir a "${esperada}". ¿Forzar su movimiento a "${nuevaAreaId}"? Confirma con el supervisor.`,
       });
       return;
     }
 
-    ejecutarMovimiento(idCamion, nuevaAreaId);
+    ejecutarMovimiento(busId, nuevaAreaId);
   };
 
-  const generarDatosDeReporte = () => {
-    return camiones.map((camion) => {
-      const movimientosDelCamion = historial.filter(
-        (mov) => mov.unidad === camion.codigo
-      );
-
-      const horaEntrada = movimientosDelCamion.length > 0
-        ? movimientosDelCamion[movimientosDelCamion.length - 1].hora
-        : "Recién registrado";
-
-      const areaActual = camion.area ? camion.area.trim() : "";
-
-      let horaSalida = "En proceso...";
-      if (areaActual === "Fuera" && camion.horaSalidaTerminal) {
-        horaSalida = camion.horaSalidaTerminal;
-      }
-
-      let estadoActual = "En flujo";
-      if (areaActual === "Fuera") {
-        estadoActual = "Completado";
-      } else if (camion.finalizado) {
-        estadoActual = "Finalizado";
-      } else if (areaActual === "Descanso") {
-        estadoActual = "En descanso";
-      }
-
-      // Calculo de progress bar
-      let porcentajeProgreso = 0;
-
-      if (areaActual === "Fuera" || camion.finalizado) {
-        porcentajeProgreso = 100;
-      } else if (camion.ruta && camion.ruta.length > 0) {
-        const indiceArea = camion.ruta.indexOf(areaActual);
-        if (indiceArea !== -1) {
-          porcentajeProgreso = Math.round(((indiceArea + 1) / camion.ruta.length) * 100);
-        }
-      } else {
-        const indiceArea = areasConfig.findIndex(a => a.id === areaActual);
-        if (indiceArea !== -1 && areasConfig.length > 0) {
-          porcentajeProgreso = Math.round(((indiceArea + 1) / areasConfig.length) * 100);
-        }
-      }
-
-
-      return {
-        id: camion.id,
-        codigo: camion.codigo,
-        conductor: camion.conductor,
-        horaEntrada: horaEntrada,
-        horaSalida: horaSalida,
-        estado: estadoActual,
-        status: estadoActual,
-        estatus: estadoActual,
-        progreso: porcentajeProgreso
-      };
-    });
+  const alSalir = async (bus) => {
+    try {
+      await avanzarBus(bus);
+    } catch (error) {
+      alert(error.message || 'Error al avanzar la unidad.');
+    }
   };
 
-  const obtenerProgresoCamion = (camion) => {
-    if (!camion) return 0;
-
-    if (camion.area === "Fuera" || camion.finalizado === true) {
-      return 100;
+  const alIniciarServicio = async (bus) => {
+    try {
+      await arrancarServicio(bus);
+    } catch (error) {
+      alert(error.message || 'Error al iniciar servicio.');
     }
+  };
 
-    if (camion.ruta && camion.ruta.length > 0) {
-      const indiceArea = camion.ruta.indexOf(camion.area);
-      if (indiceArea !== -1) {
-        return Math.round(((indiceArea + 1) / camion.ruta.length) * 100);
-      }
-    }
+  const alertasRetraso = autobuses.filter((bus) => obtenerSemaforo(bus)?.color === 'rojo');
 
-    const indiceArea = areasConfig.findIndex(a => a.id === camion.area);
-    if (indiceArea !== -1) {
-      return Math.round(((indiceArea + 1) / areasConfig.length) * 100);
-    }
-
-    console.warn("Área desconocida para el camión:", camion.area);
-    return 0;
+  const irA = (vista) => {
+    setPestanaActiva(vista);
+    if (vista !== 'registrar') setTagPendiente(null);
+    if (vista === 'patio') cargarAutobuses();
   };
 
   const renderizarContenido = () => {
@@ -440,80 +145,42 @@ export default function DropDrag() {
       case 'patio':
         return (
           <div className="drag-board">
-            {areasConfig.map((areaInfo) => {
+            {areas.map((areaInfo) => {
               const nombreArea = areaInfo.id;
-              const capacidadMaxima = areaInfo.capacidad;
-              const camionesActuales = camiones.filter((c) => c.area === nombreArea).length;
-              
-
+              const busesArea = autobuses.filter((b) => b.currentArea === nombreArea);
               return (
-                <div
-                  key={nombreArea}
-                  className="drag-zone"
-                  onDragOver={permitirSoltar}
-                  onDrop={(e) => alSoltar(e, nombreArea)}
-                >
+                <div key={nombreArea} className="drag-zone" onDragOver={permitirSoltar} onDrop={(e) => alSoltar(e, nombreArea)}>
                   <div className="drag-zone__header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="sidebar__icon-active">
-                        {areaIcons[nombreArea]}
-                      </span>
-                      <h3>{nombreArea}</h3>
+                      <span className="sidebar__icon-active">{AREA_ICONS[nombreArea] || <MdDashboard />}</span>
+                      <h3>{areaInfo.nombre || nombreArea}</h3>
                     </div>
-                    <span className="zone-counter">
-                      Capacidad: {camionesActuales}/{capacidadMaxima}
-                    </span>
+                    <span className="zone-counter">{busesArea.length}/{areaInfo.capacidad}</span>
                   </div>
-
                   <div className="drag-zone__content">
-                    {camiones.filter((camion) => camion.area === nombreArea).length === 0 ? (
+                    {cargando ? (
+                      <div className="no-buses">Cargando...</div>
+                    ) : busesArea.length === 0 ? (
                       <div className="no-buses">No hay autobuses</div>
                     ) : (
-                      camiones
-                        .filter((camion) => camion.area === nombreArea)
-                        .map((camion) => (
-                          <div
-                            key={camion.id}
-                            onDoubleClick={() => setCamionSeleccionado(camion)}
-                            title="Doble clic para ver detalles del Registro"
-                          >
-                            <TarjetaInfo
-                              camion={camion}
-                              alIniciarArrastre={alIniciarArrastre}
-                              crearAlerta={crearAlerta}
-                              progreso={obtenerProgresoCamion(camion)}
-                            />
-
-                            {/* BOTONES DUALES */}
-                            {camion.ruta && camion.ruta[camion.ruta.length - 1] === nombreArea && nombreArea !== "Descanso" && !camion.finalizado && (
-                              <div className="botones-accion-final">
-                                <button
-                                  className="btn-final btn-descanso"
-                                  onClick={() => mandarADescanso(camion.id)}
-                                >
-                                  Descanso
-                                </button>
-                                <button
-                                  className="btn-final btn-salida"
-                                  onClick={() => sacarCamion(camion.id)}
-                                >
-                                  Salida
-                                </button>
-                              </div>
-                            )}
-
-                            {nombreArea === "Descanso" && (
-                              <div className="botones-accion-final">
-                                <button
-                                  className="btn-final btn-salida"
-                                  onClick={() => sacarCamion(camion.id)}
-                                >
-                                  Salida de Terminal
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
+                      busesArea.map((bus) => (
+                        <div key={bus.busId}>
+                          <TarjetaInfo
+                            bus={bus}
+                            semaforo={obtenerSemaforo(bus)}
+                            alIniciarArrastre={alIniciarArrastre}
+                            onVerFicha={setCamionSeleccionado}
+                            onIniciarServicio={alIniciarServicio}
+                          />
+                          {siguienteAreaEsperada(bus) === 'Salida' && (
+                            <div className="botones-accion-final">
+                              <button className="btn-final btn-salida" disabled={moviendo} onClick={() => alSalir(bus)}>
+                                Salida
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>
@@ -522,187 +189,58 @@ export default function DropDrag() {
           </div>
         );
       case 'registrar':
-        return (
-          <Registro
-            agregarCamion={agregarCamion}
-            agregarHistorial={agregarHistorial}
-          />
-        );
+        return <Registro tagNfc={tagPendiente} onRegistrado={() => irA('patio')} />;
       case 'historial':
-        return (
-          <div className="historial-container">
-            <h2>Historial de Movimientos</h2>
-
-            {historial.length === 0 ? (
-              <p>No hay registros disponibles.</p>
-            ) : (
-              <div className="historial-grid">
-                {historial.map((registro) => (
-                  <div
-                    key={registro.id}
-                    className="historial-card"
-                  >
-                    <div className="historial-card__mensaje">
-                      {registro.mensaje}
-                    </div>
-
-                    <div className="historial-card__info">
-                      <span>Unidad: {registro.unidad}</span>
-                    </div>
-
-                    <div className="historial-card__fecha">
-                      {registro.fecha} · {registro.hora}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+        return <HistorialPage />;
       case 'reportes':
-        return <Reportes datos={generarDatosDeReporte()} />;
-
+        return <Reportes autobuses={autobuses} obtenerSemaforo={obtenerSemaforo} />;
       case 'configuracion':
-        return (
-          <ConfAvaz
-            areasConfig={areasConfig}
-            setAreasConfig={setAreasConfig}
-            camiones={camiones}
-            setCamiones={setCamiones}
-          />
-        );
+        return <ConfAvaz autobuses={autobuses} areas={areas} confirmarMovimientoDirecto={confirmarMovimientoDirecto} />;
       default:
         return <div className="pantalla-vacia"><h2>Selecciona una opción</h2></div>;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="layout-container">
-        <main className="main-content">
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <p>Cargando datos del sistema...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
+    <div className="ado-desktop-shell">
     <div className="layout-container">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
-      {camionSeleccionado && (
-        <BusDetailModal
-          camion={camionSeleccionado}
-          onClose={() => setCamionSeleccionado(null)}
-        />
-      )}
-
-      {/* MODAL DE ADVERTENCIA DE DESVÍO */}
-      {movimientoPendiente && (
-        <div className="modal-overlay" style={{ zIndex: 9999 }}>
-          <div className="modal-card" style={{ maxWidth: '450px', textAlign: 'center' }}>
-
-            <div style={{ backgroundColor: '#f59e0b', padding: '15px', borderRadius: '8px 8px 0 0' }}>
-              <h2 style={{ margin: 0, color: '#1a2235', fontSize: '20px' }}>⚠️ Desvío de Ruta Detectado</h2>
-            </div>
-
-            <div className="modal-card__body" style={{ padding: '25px 20px' }}>
-              <p style={{ fontSize: '16px', color: '#e5e7eb', marginBottom: '25px', lineHeight: '1.5' }}>
-                {movimientoPendiente.mensaje}
-              </p>
-
-              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-                <button
-                  className="btn-secondary"
-                  onClick={() => setMovimientoPendiente(null)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  className="btn-primary"
-                  style={{ backgroundColor: '#f59e0b', color: '#1a2235', fontWeight: 'bold' }}
-                  onClick={() => {
-                    ejecutarMovimiento(movimientoPendiente.idCamion, movimientoPendiente.nuevaAreaId, true);
-                    setMovimientoPendiente(null); // Cerramos el modal tras confirmar
-                  }}
-                >
-                  Sí, forzar movimiento
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
       <aside className="sidebar">
         <div className="sidebar__logo">
-          <img
-            src="/logo-ado.png"
-            alt="ADO"
-            className="sidebar__logo-img"
-          />
+          <img src="/logo-ado.png" alt="ADO" className="sidebar__logo-img" />
         </div>
 
         <nav className="sidebar__nav">
-          <button
-            className={`sidebar__item ${pestanaActiva === 'patio' ? 'sidebar__item--active' : ''}`}
-            onClick={() => setPestanaActiva('patio')}
-          >
+          <button className={`sidebar__item ${pestanaActiva === 'patio' ? 'sidebar__item--active' : ''}`} onClick={() => irA('patio')}>
             <MdDashboard className="sidebar__icon" />
             <span>Patio en tiempo real</span>
           </button>
           {esAdmin && (
-            <button
-              className={`sidebar__item ${pestanaActiva === 'registrar' ? 'sidebar__item--active' : ''}`}
-              onClick={() => setPestanaActiva('registrar')}
-            >
+            <button className={`sidebar__item ${pestanaActiva === 'registrar' ? 'sidebar__item--active' : ''}`} onClick={() => irA('registrar')}>
               <MdAssignmentTurnedIn className="sidebar__icon" />
               <span>Registrar autobús</span>
             </button>
           )}
           {(esAdmin || esSupervisor) && (
-            <button
-              className={`sidebar__item ${pestanaActiva === 'historial' ? 'sidebar__item--active' : ''}`}
-              onClick={() => setPestanaActiva('historial')}
-            >
+            <button className={`sidebar__item ${pestanaActiva === 'historial' ? 'sidebar__item--active' : ''}`} onClick={() => irA('historial')}>
               <MdHistory className="sidebar__icon" />
               <span>Historial</span>
             </button>
           )}
           {(esAdmin || esSupervisor) && (
-            <button
-              className={`sidebar__item ${pestanaActiva === 'reportes' ? 'sidebar__item--active' : ''}`}
-              onClick={() => setPestanaActiva('reportes')}
-            >
+            <button className={`sidebar__item ${pestanaActiva === 'reportes' ? 'sidebar__item--active' : ''}`} onClick={() => irA('reportes')}>
               <MdBarChart className="sidebar__icon" />
               <span>Reportes</span>
             </button>
           )}
           {esAdmin && (
-            <button
-              className={`sidebar__item ${pestanaActiva === 'configuracion' ? 'sidebar__item--active' : ''}`}
-              onClick={() => setPestanaActiva('configuracion')}
-            >
+            <button className={`sidebar__item ${pestanaActiva === 'configuracion' ? 'sidebar__item--active' : ''}`} onClick={() => irA('configuracion')}>
               <MdSettings className="sidebar__icon" />
               <span>Configuración Avanzada</span>
             </button>
           )}
         </nav>
 
-        <button
-          className="sidebar__logout"
-          onClick={handleLogout}
-          title={`Cerrar sesión (${user?.nombre || user?.id || 'Usuario'})`}
-        >
+        <button className="sidebar__logout" onClick={() => { ejecutarCerrarSesion(); if (onLogout) onLogout(); }}>
           <MdExitToApp className="sidebar__icon" />
           <span>Cerrar sesión</span>
         </button>
@@ -711,24 +249,77 @@ export default function DropDrag() {
       <main className="main-content">
         <header className="main-content__header">
           <h1>Control de Patio - Oaxaca</h1>
-          <p>Sesión de {user?.nombre || user?.id}</p>
+          <p>{usuario?.nombre} · {usuario?.rol}</p>
         </header>
-        <div className="content-scroll-area">
-          {alertas.length > 0 && (
-            <div className="alertas-container">
-              {alertas.map((alerta, index) => (
-                <div key={index} className="alerta-toast">
+
+        {alertasRetraso.length > 0 && (
+          <div className="alertas-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+            {alertasRetraso.map((bus) => {
+              const semaforo = obtenerSemaforo(bus);
+              return (
+                <div key={bus.busId} style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.9rem' }}>
                   <MdAddAlert />
-                  <span>
-                    El autobús {alerta.autobus} está en {alerta.area} y lleva {alerta.tiempo}
-                  </span>
+                  <span>La unidad {bus.busId} lleva {semaforo.elapsed} min en {bus.currentArea} (promedio {semaforo.promedio} min)</span>
                 </div>
-              ))}
-            </div>
-          )}
-          {renderizarContenido()}
-        </div>
+              );
+            })}
+          </div>
+        )}
+
+        {renderizarContenido()}
       </main>
+
+      {camionSeleccionado && (
+        <div className="modal-overlay" onClick={() => setCamionSeleccionado(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-card__header">
+              <h2>Ficha de Registro: {camionSeleccionado.busId}</h2>
+              <button className="modal-card__close" onClick={() => setCamionSeleccionado(null)}>&times;</button>
+            </div>
+            <div className="modal-card__body">
+              <div className="modal-data-row"><strong>Serie:</strong> <span>{camionSeleccionado.busId}</span></div>
+              <div className="modal-data-row"><strong>Tipo de Unidad:</strong> <span>{camionSeleccionado.busType}</span></div>
+              <div className="modal-data-row"><strong>Área Actual:</strong> <span>{camionSeleccionado.currentArea}</span></div>
+              <div className="modal-data-row"><strong>Hora de Salida:</strong> <span>{camionSeleccionado.departureTime}</span></div>
+              <div className="modal-data-row"><strong>Conductor:</strong> <span>{camionSeleccionado.conductor || 'No asignado'}</span></div>
+              <div className="modal-data-row"><strong>Origen:</strong> <span>{camionSeleccionado.terminalOrigen || 'N/A'}</span></div>
+              <div className="modal-data-row"><strong>Destino:</strong> <span>{camionSeleccionado.terminalDestino || 'N/A'}</span></div>
+              {camionSeleccionado.requiredAreas.length > 0 && (
+                <div className="modal-data-row"><strong>Ruta:</strong> <span>{camionSeleccionado.requiredAreas.join(' → ')}</span></div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {movimientoPendiente && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="modal-card" style={{ maxWidth: '450px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#f59e0b', padding: '15px', borderRadius: '8px 8px 0 0' }}>
+              <h2 style={{ margin: 0, color: '#1a2235', fontSize: '20px' }}>⚠️ Flujo incorrecto</h2>
+            </div>
+            <div className="modal-card__body" style={{ padding: '25px 20px' }}>
+              <p style={{ fontSize: '16px', color: '#0f172a', marginBottom: '25px', lineHeight: '1.5' }}>
+                {movimientoPendiente.mensaje}
+              </p>
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                <button className="btn-secondary" onClick={() => setMovimientoPendiente(null)}>Cancelar</button>
+                <button
+                  className="btn-primary"
+                  style={{ backgroundColor: '#f59e0b' }}
+                  onClick={() => {
+                    ejecutarMovimiento(movimientoPendiente.busId, movimientoPendiente.nuevaAreaId);
+                    setMovimientoPendiente(null);
+                  }}
+                >
+                  Sí, forzar movimiento
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
     </div>
   );
 }

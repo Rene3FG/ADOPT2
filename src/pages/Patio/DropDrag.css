@@ -1,41 +1,41 @@
-.layout-container {
+.ado-desktop-shell .layout-container {
   display: flex;
   width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #0b0d14;
-  color: #f1f5f9;
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden; 
 }
 
-.sidebar {
+.ado-desktop-shell .sidebar {
   width: 250px;
   height: 100vh;
-  background-color: #11131e;
-  border-right: 1px solid #1e2235;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   box-sizing: border-box;
 }
 
-.sidebar__logo {
+.ado-desktop-shell .sidebar__logo {
   padding: 24px 20px;
-  border-bottom: 1px solid #1e2235;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
 }
 
-.sidebar__logo-img {
+.ado-desktop-shell .sidebar__logo-img {
   height: 40px;
   width: auto;
   object-fit: contain;
 }
 
-.sidebar__nav {
+.ado-desktop-shell .sidebar__nav {
   flex: 1;
   padding: 16px 0;
   display: flex;
@@ -43,7 +43,7 @@
   gap: 4px;
 }
 
-.sidebar__item {
+.ado-desktop-shell .sidebar__item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -58,35 +58,35 @@
   transition: all 0.2s ease;
 }
 
-.sidebar__item:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-  color: #f1f5f9;
+.ado-desktop-shell .sidebar__item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
-.sidebar__item--active {
-  background-color: rgba(226, 28, 36, 0.1);
+.ado-desktop-shell .sidebar__item--active {
+  background-color: rgba(226, 28, 36, 0.08);
   color: #e21c24;
   font-weight: 600;
   border-left: 3px solid #e21c24;
 }
 
-.sidebar__icon {
+.ado-desktop-shell .sidebar__icon {
   font-size: 18px;
 }
 
-.sidebar__icon-active {
+.ado-desktop-shell .sidebar__icon-active {
   font-size: 18px;
   color: #e21c24;
 }
 
-.sidebar__logout {
+.ado-desktop-shell .sidebar__logout {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   padding: 16px 20px;
   border: none;
-  border-top: 1px solid #1e2235;
+  border-top: 1px solid #e2e8f0;
   background: transparent;
   color: #64748b;
   font-size: 13px;
@@ -94,91 +94,84 @@
   margin-top: auto;
 }
 
-.sidebar__logout:hover {
-  color: #f87171;
+.ado-desktop-shell .sidebar__logout:hover {
+  color: #dc2626;
+  background-color: #fef2f2;
 }
 
 /* CONTENIDO DERECHO Y TABLERO */
-.main-content {
+.ado-desktop-shell .main-content {
   flex: 1;
-  min-height: 0;
+  padding: 30px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.content-scroll-area {
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
-  padding: 0 30px 30px;
   box-sizing: border-box;
 }
 
-.main-content__header h1 {
+.ado-desktop-shell .main-content__header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
+  color: #0f172a;
   margin-bottom: 6px;
   letter-spacing: 0.5px;
 }
 
-.main-content__header p {
-  color: #94a3b8;
+.ado-desktop-shell .main-content__header p {
+  color: #64748b;
   font-size: 15px;
   margin: 0;
 }
 
-.main-content__header {
-  margin-bottom: 0;
-  padding: 30px 30px 18px;
+.ado-desktop-shell .main-content__header {
+  margin-bottom: 30px;
+  padding-bottom: 18px;
   border-bottom: 2px solid #e21c24;
-  background-color: #0b0d14;
-  flex-shrink: 0;
 }
 
-.drag-board {
+.ado-desktop-shell .drag-board {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
   align-items: start;
 }
 
-.drag-zone {
-  background-color: #11131e;
-  border: 1px solid #1e2235;
+.ado-desktop-shell .drag-zone {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.drag-zone__header {
+.ado-desktop-shell .drag-zone__header {
   padding: 14px 16px;
-  background-color: #161927;
-  border-bottom: 1px solid #1e2235;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.drag-zone__header h3 {
+.ado-desktop-shell .drag-zone__header h3 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: #0f172a;
 }
 
-.zone-counter {
-  background-color: #1e2235;
-  color: #94a3b8;
+.ado-desktop-shell .zone-counter {
+  background-color: #e2e8f0;
+  color: #475569;
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 4px;
+  font-weight: 600;
 }
 
-.drag-zone__content {
+.ado-desktop-shell .drag-zone__content {
   padding: 16px;
   min-height: 150px;
   display: flex;
@@ -186,25 +179,25 @@
   gap: 10px;
 }
 
-.no-buses {
+.ado-desktop-shell .no-buses {
   font-size: 12px;
-  color: #475569;
+  color: #94a3b8;
   text-align: center;
   margin: auto 0;
-  border: 1px dashed #1e2235;
+  border: 1px dashed #cbd5e1;
   padding: 20px 0;
   border-radius: 6px;
 }
 
-.pantalla-vacia {
+.ado-desktop-shell .pantalla-vacia {
   padding: 20px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 /*TARJETAS DE AUTOBUSES*/
-.bus-card {
-  background-color: #1c1f30; 
-  border: 1px solid #2a2f4a;  
+.ado-desktop-shell .bus-card {
+  background-color: #ffffff; 
+  border: 1px solid #e2e8f0;  
   padding: 14px;
   border-radius: 8px;
   cursor: grab; 
@@ -215,33 +208,34 @@
   gap: 4px;
   box-sizing: border-box;
   transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.bus-card:active {
+.ado-desktop-shell .bus-card:active {
   cursor: grabbing;
   transform: scale(0.97);
 }
 
-.bus-card:hover {
-  border-color: #3b4268;
-  background-color: #22273d;
+.ado-desktop-shell .bus-card:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
   transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
-.bus-card__eco {
+.ado-desktop-shell .bus-card__eco {
   font-size: 15px;
   font-weight: bold;
-  color: #ffffff;
+  color: #0f172a;
   letter-spacing: 0.5px;
 }
 
-.bus-card__type {
+.ado-desktop-shell .bus-card__type {
   font-size: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
-.bus-card__status {
+.ado-desktop-shell .bus-card__status {
   font-size: 11px;
   color: #e21c24; 
   background-color: rgba(226, 28, 36, 0.08); 
@@ -251,43 +245,43 @@
   font-weight: 500;
   letter-spacing: 0.3px;
 }
-.bus-card__header {
+
+.ado-desktop-shell .bus-card__header {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.semaforo {
+.ado-desktop-shell .semaforo {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.semaforo--verde {
+.ado-desktop-shell .semaforo--verde {
   background-color: #22c55e;
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
 }
 
-.semaforo--amarillo {
-  background-color: #facc15;
-  box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+.ado-desktop-shell .semaforo--amarillo {
+  background-color: #eab308;
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
 }
 
-.semaforo--rojo {
+.ado-desktop-shell .semaforo--rojo {
   background-color: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
- 
 
 /* BANNER DETALLES DEL CAMION  */
-.modal-overlay {
+.ado-desktop-shell .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7); 
+  background-color: rgba(15, 23, 42, 0.4); 
   backdrop-filter: blur(4px); 
   display: flex;
   justify-content: center;
@@ -295,13 +289,13 @@
   z-index: 9999;
 }
 
-.modal-card {
-  background-color: #11131e;
-  border: 1px solid #2a2f4a;
+.ado-desktop-shell .modal-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   width: 100%;
   max-width: 450px;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   overflow: hidden;
   animation: aparecerModal 0.2s ease-out;
 }
@@ -311,112 +305,114 @@
   to { transform: scale(1); opacity: 1; }
 }
 
-.modal-card__header {
-  background-color: #161927;
+.ado-desktop-shell .modal-card__header {
+  background-color: #f8fafc;
   padding: 16px 20px;
-  border-bottom: 1px solid #1e2235;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.modal-card__header h2 {
+.ado-desktop-shell .modal-card__header h2 {
   margin: 0;
   font-size: 16px;
-  color: #ffffff;
+  color: #0f172a;
   font-weight: 600;
 }
 
-.modal-card__close {
+.ado-desktop-shell .modal-card__close {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: #94a3b8;
   font-size: 24px;
   cursor: pointer;
   transition: color 0.15s;
 }
 
-.modal-card__close:hover {
+.ado-desktop-shell .modal-card__close:hover {
   color: #e21c24;
 }
 
-.modal-card__body {
+.ado-desktop-shell .modal-card__body {
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.modal-data-row {
+.ado-desktop-shell .modal-data-row {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  border-bottom: 1px solid rgba(30, 34, 53, 0.5);
+  border-bottom: 1px solid #f1f5f9;
   padding-bottom: 8px;
 }
 
-.modal-data-row strong {
-  color: #94a3b8;
+.ado-desktop-shell .modal-data-row strong {
+  color: #64748b;
   font-weight: 500;
 }
 
-.modal-data-row span {
-  color: #ffffff;
+.ado-desktop-shell .modal-data-row span {
+  color: #0f172a;
   font-weight: 600;
 }
 
 /* HISTORIAL */
 
-.historial-container h2 {
+.ado-desktop-shell .historial-container h2 {
   font-size: 24px;
-  color: #ffffff;
+  color: #0f172a;
   font-weight: 700;
   margin-bottom: 20px;
   border-left: 4px solid #e21c24;
   padding-left: 12px;
 }
 
-.historial-grid {
+.ado-desktop-shell .historial-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
-.historial-card {
-  background-color: #1c1f30;
-  border: 1px solid #2a2f4a;
+.ado-desktop-shell .historial-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   transition: 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.historial-card:hover {
-  border-color: #3b4268;
+.ado-desktop-shell .historial-card:hover {
+  border-color: #cbd5e1;
   transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.historial-card__mensaje {
-  color: #ffffff;
+.ado-desktop-shell .historial-card__mensaje {
+  color: #0f172a;
   font-size: 14px;
   font-weight: 600;
 }
 
-.historial-card__info {
-  color: #94a3b8;
+.ado-desktop-shell .historial-card__info {
+  color: #64748b;
   font-size: 12px;
 }
 
-.historial-card__fecha {
-  color: #64748b;
+.ado-desktop-shell .historial-card__fecha {
+  color: #94a3b8;
   font-size: 11px;
-  border-top: 1px solid #2a2f4a;
+  border-top: 1px solid #f1f5f9;
   padding-top: 8px;
 }
 
-.btn-salida {
+.ado-desktop-shell .btn-salida {
   width: 100%;
   margin-top: 8px;
   padding: 10px;
@@ -438,162 +434,132 @@
   cursor: pointer;
   transition: all 0.2s ease;
 
-  box-shadow: 0 4px 10px rgba(226, 28, 36, 0.25);
+  box-shadow: 0 4px 10px rgba(226, 28, 36, 0.2);
 }
 
-.btn-salida:hover {
+.ado-desktop-shell .btn-salida:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(226, 28, 36, 0.35);
+  box-shadow: 0 6px 14px rgba(226, 28, 36, 0.3);
 }
 
-.btn-salida:active {
+.ado-desktop-shell .btn-salida:active {
   transform: scale(0.97);
 }
 
 /* --- ENCABEZADO DE LA TARJETA --- */
-.tarjeta-header {
+.ado-desktop-shell .tarjeta-header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.codigo-unidad {
-  color: #ffffff;
-  font-weight: bold;
-  font-size: 15px;
+.ado-desktop-shell .codigo-unidad {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a; /* Texto slate-900 súper claro */
 }
 
-.tipo-unidad {
-  color: #9ca3af;
-  font-size: 12px;
+.ado-desktop-shell .tipo-unidad {
   text-align: center;
-  margin-bottom: 14px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+  margin-bottom: 12px;
 }
 
 /* --- SEMÁFORO (Puntito de estado) --- */
-.estado-semaforo {
+.ado-desktop-shell .estado-semaforo {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.estado-semaforo.verde { background-color: #10b981; }
-.estado-semaforo.amarillo { background-color: #f59e0b; }
-.estado-semaforo.rojo { background-color: #ef4444; }
+.ado-desktop-shell .estado-semaforo.verde { background-color: #10b981; }
+.ado-desktop-shell .estado-semaforo.amarillo { background-color: #f59e0b; }
+.ado-desktop-shell .estado-semaforo.rojo { background-color: #ef4444; }
 
 /* --- CRONÓMETRO (Pastilla de color) --- */
-.tiempo-area {
-  font-size: 12px;
+.ado-desktop-shell .tiempo-area {
   text-align: center;
-  padding: 4px 12px;
-  border-radius: 12px;
-  margin: 0 auto 10px auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
   width: fit-content;
+  margin: 0 auto 12px auto;
 }
 
-/* Cuando recién entra (Sin pastilla, texto blanco) */
-.tiempo-area.verde { 
-  color: #ffffff; 
-  background-color: transparent;
+/* Cuando recién entra (Sin pastilla, texto oscuro) */
+.ado-desktop-shell .tiempo-area.verde {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
 }
 
 /* Cuando se acerca al límite (Pastilla amarilla/naranja) */
-.tiempo-area.amarillo { 
-  color: #f59e0b; 
-  background-color: rgba(245, 158, 11, 0.1); 
+.ado-desktop-shell .tiempo-area.amarillo {
+  background-color: #fffbe3;
+  color: #b45309;
+  border: 1px solid #fde68a;
 }
 
-/* Cuando excede el tiempo (Pastilla roja) */
-.tiempo-area.rojo { 
-  color: #ef4444; 
-  background-color: rgba(239, 68, 68, 0.15); 
+.ado-desktop-shell .tiempo-area.rojo {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 
 /* --- BARRA DE PROGRESO --- */
-.tarjeta-progreso-mini-bg {
-  background-color: #222b3c;
-  border-radius: 4px;
-  height: 4px;
-  width: 90%;
-  margin: 0 auto;
+.ado-desktop-shell .tarjeta-progreso-mini-bg {
+  background-color: #e2e8f0;
+  border-radius: 999px;
+  height: 8px;
   overflow: hidden;
 }
 
-.tarjeta-progreso-mini-fill {
-  background: linear-gradient(90deg, #3b82f6, #10b981);
+.ado-desktop-shell .tarjeta-progreso-mini-fill {
+  background-color: #0284c7; /* Azul vívido para la barra */
   height: 100%;
-  transition: width 0.4s ease;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 
-.tarjeta-camion {
-  background-color: #1a2235; /* El color oscuro del fondo del recuadro */
-  border: 1px solid #2d3748; /* El borde sutil */
-  border-radius: 8px;
-  padding: 16px 12px;
-  margin-bottom: 12px;
+.ado-desktop-shell .tarjeta-camion {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1; /* Borde slate-300 más definido */
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px auto;
+  width: 90%;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); /* Sombra suave para dar profundidad */
+  transition: all 0.2s ease-in-out;
   cursor: grab;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra para darle profundidad */
 }
 
-.tarjeta-camion:active {
+.ado-desktop-shell .tarjeta-camion:hover {
+  transform: translateY(-2px);
+  border-color: #94a3b8;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.ado-desktop-shell .tarjeta-camion:active {
   cursor: grabbing;
-  opacity: 0.8;
 }
 
 /* =========================================
    BOTONES DE ÁREA FINAL (DESCANSO / SALIDA)
    ========================================= */
-.botones-accion-final {
+.ado-desktop-shell .botones-accion-final {
   display: flex;
   gap: 8px;
   margin-top: 12px;
   width: 100%;
 }
 
-.btn-final {
-  flex: 1;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-descanso {
-  background-color: #374151; 
-  color: #F9FAFB;
-  border: 1px solid #4B5563;
-}
-
-.btn-descanso:hover {
-  background-color: #4B5563;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.btn-salida {
-  background-color: #C62828; 
-  color: #FFFFFF;
-}
-
-.btn-salida:hover {
-  background-color: #E53935;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(198, 40, 40, 0.4);
-}
-
-.btn-final:active {
-  transform: translateY(0);
-}
-
-.btn-final {
+.ado-desktop-shell .btn-final {
   flex: 1 1 0;
   width: 100%;
   padding: 8px 4px;
@@ -609,33 +575,60 @@
   box-sizing: border-box;
 }
 
+.ado-desktop-shell .btn-descanso {
+  background-color: #e2e8f0; 
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.ado-desktop-shell .btn-descanso:hover {
+  background-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ado-desktop-shell .btn-salida {
+  background-color: #e21c24; 
+  color: #ffffff;
+}
+
+.ado-desktop-shell .btn-salida:hover {
+  background-color: #b8141a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(226, 28, 36, 0.3);
+}
+
+.ado-desktop-shell .btn-final:active {
+  transform: translateY(0);
+}
+
 /*MEDIA QUERY */
 @media(max-width: 768px) { 
-  .drag-board {
+  .ado-desktop-shell .drag-board {
     grid-template-columns: repeat(2, 1fr);
   }
-  .layout-container {
+  .ado-desktop-shell .layout-container {
     flex-direction: column;
   }
-  .sidebar {
+  .ado-desktop-shell .sidebar {
     width: 100%;
     height: auto;
     flex-direction: row;
     overflow-x: auto;
   }
-  .sidebar__nav {
+  .ado-desktop-shell .sidebar__nav {
     flex-direction: row;
     padding: 10px;
   }
-  .sidebar__item {
+  .ado-desktop-shell .sidebar__item {
     width: auto;
     white-space: nowrap;
   }
-  .sidebar__logout {
+  .ado-desktop-shell .sidebar__logout {
     display: none;
   }
 
-  .bus-card {
+  .ado-desktop-shell .bus-card {
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
@@ -645,19 +638,19 @@
     padding: 12px;
   }
 
-  .bus-card__eco {
+  .ado-desktop-shell .bus-card__eco {
     grid-column: 1;
     grid-row: 1 / span 2;
     font-size: 16px;
   }
 
-  .bus-card__type {
+  .ado-desktop-shell .bus-card__type {
     grid-column: 2;
     grid-row: 1;
     font-size: 11px;
   }
 
-  .bus-card__status {
+  .ado-desktop-shell .bus-card__status {
     grid-column: 2;
     grid-row: 2;   
     margin-top: 0;  

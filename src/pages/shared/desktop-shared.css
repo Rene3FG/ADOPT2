@@ -1,0 +1,49 @@
+/* Tokens y clases compartidas entre las pestañas del escritorio (DropDrag,
+   Registro, Reportes, ConfAvanz) — todas viven bajo .ado-desktop-shell para
+   no chocar con las variables/clases de la vista mobile (PatioPage.css) ni
+   con la pantalla de login (login.css), que se cargan en el mismo bundle. */
+
+.ado-desktop-shell {
+  --primary: #e21c24;
+  --primary-dark: #b8141a;
+  --background: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border: #cbd5e1;
+}
+
+.ado-desktop-shell .btn-primary,
+.ado-desktop-shell .btn-success {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ado-desktop-shell .btn-primary:hover,
+.ado-desktop-shell .btn-success:hover {
+  background: var(--primary-dark);
+}
+
+.ado-desktop-shell .btn-primary:disabled,
+.ado-desktop-shell .btn-success:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ado-desktop-shell .btn-secondary {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 12px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.ado-desktop-shell .btn-secondary:hover {
+  background: #f1f5f9;
+}
