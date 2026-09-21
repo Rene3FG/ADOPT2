@@ -155,7 +155,7 @@ export default function DropDrag({ usuario, onLogout }) {
                       <span className="sidebar__icon-active">{AREA_ICONS[nombreArea] || <MdDashboard />}</span>
                       <h3>{areaInfo.nombre || nombreArea}</h3>
                     </div>
-                    <span className="zone-counter">{busesArea.length}/{areaInfo.capacidad}</span>
+                    <span className="zone-counter">Capacidad: {busesArea.length}/{areaInfo.capacidad}</span>
                   </div>
                   <div className="drag-zone__content">
                     {cargando ? (
