@@ -11,6 +11,15 @@ export async function apiFetch(path, options = {}) {
     headers: { ...headers, ...(options.headers || {}) },
   });
   if (!res.ok) {
+    // JWT vencido (la API lo emite por 12 h): mismo cierre que "Cerrar sesión".
+    // Solo con token guardado y fuera de /login, para que credenciales malas
+    // sigan mostrando su error en vez de recargar la página.
+    if (res.status === 401 && token && path !== '/login') {
+      localStorage.removeItem('sca_token');
+      localStorage.removeItem('sesionAdo');
+      window.location.reload();
+      throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    }
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `Error ${res.status} en ${path}`);
   }
