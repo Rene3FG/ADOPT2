@@ -10,6 +10,7 @@ import { ReportesPage } from './ReportesPage';
 import { AREAS_PATIO } from '../../areasConfig';
 import { AreaRepository } from '../../data/repositories/AreaRepository';
 import { SwipeToConfirm } from '../components/SwipeToConfirm';
+import { LectorQR } from '../components/LectorQR';
 import "../../../App.css";
 import "../styles/PatioPage.css";
 
@@ -24,11 +25,12 @@ export const PatioPage = ({ usuario }) => {
   // Tag NFC escaneado que aún no está asociado a ninguna unidad — dispara el
   // flujo de registro de llegada (el formulario lo asocia al guardar).
   const [tagPendiente, setTagPendiente] = useState(null);
+  const [escaneandoQr, setEscaneandoQr] = useState(false);
 
   const {
     autobuses, cargando, cargarAutobuses,
     busSeleccionado, cerrarModal, abrirModalMover, moviendo,
-    arrancarServicio, avanzarBus, avanzarPorNfc,
+    arrancarServicio, avanzarBus, avanzarPorNfc, avanzarPorQr,
     obtenerSemaforo, promediosArea
   } = usePatioBloc();
 
@@ -74,6 +76,30 @@ export const PatioPage = ({ usuario }) => {
       };
     } catch (error) {
       alert('No se pudo activar el lector NFC: ' + (error.message || error));
+    }
+  };
+
+  // El QR pegado en el autobús contiene solo su número de serie (ver QrUnidadModal).
+  const soporteCamara = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+  const procesarQr = async (codigo) => {
+    setEscaneandoQr(false);
+    const texto = String(codigo ?? '').trim();
+    const serie = Number.parseInt(texto, 10);
+    if (!/^\d+$/.test(texto) || !Number.isSafeInteger(serie)) {
+      alert('El código QR no corresponde a una unidad ADO.');
+      return;
+    }
+    try {
+      await avanzarPorQr(serie);
+    } catch (error) {
+      const msg = error.message || '';
+      if (msg.includes('no está en tu área')) {
+        alert('Flujo incorrecto, confirme con el supervisor.');
+      } else if (msg.includes('no encontrado')) {
+        alert(`La unidad ${serie} no está en el patio hoy. Verifica el código QR.`);
+      } else {
+        alert(msg || 'No se pudo procesar el código QR.');
+      }
     }
   };
 
@@ -283,14 +309,27 @@ export const PatioPage = ({ usuario }) => {
                     <h1 style={{ margin: 0, fontSize: '24px' }}>Área: {areaOperador}</h1>
                     <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#FFEB3B' }}>Ocupación: {ocupacionActual}/{capacidadMaxArea} camiones</p>
                     {promediosArea?.[areaOperador] != null && <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>⏱️ Tiempo Promedio: {promediosArea[areaOperador]} min</p>}
-                    {soporteNfc && (
-                      <button
-                        onClick={escanearNfc}
-                        disabled={moviendo}
-                        style={{ marginTop: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: moviendo ? 'not-allowed' : 'pointer' }}
-                      >
-                        📡 Escanear NFC
-                      </button>
+                    {(soporteNfc || soporteCamara) && (
+                      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {soporteNfc && (
+                          <button
+                            onClick={escanearNfc}
+                            disabled={moviendo}
+                            style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: moviendo ? 'not-allowed' : 'pointer' }}
+                          >
+                            📡 Escanear NFC
+                          </button>
+                        )}
+                        {soporteCamara && (
+                          <button
+                            onClick={() => setEscaneandoQr(true)}
+                            disabled={moviendo}
+                            style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: moviendo ? 'not-allowed' : 'pointer' }}
+                          >
+                            📷 Escanear QR
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -460,6 +499,20 @@ export const PatioPage = ({ usuario }) => {
                   Sí, iniciar
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= MODAL: ESCÁNER QR ================= */}
+        {escaneandoQr && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: '20px', boxSizing: 'border-box' }}>
+            <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+              <h2 style={{ margin: '0 0 6px', color: '#333', fontSize: '1.3rem' }}>Escanear unidad</h2>
+              <p style={{ margin: '0 0 16px', color: '#666', fontSize: '0.9rem' }}>Apunta la cámara al código QR del cristal del autobús.</p>
+              <LectorQR onScanExitoso={procesarQr} />
+              <button onClick={() => setEscaneandoQr(false)} style={{ marginTop: '18px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
+                Cancelar
+              </button>
             </div>
           </div>
         )}

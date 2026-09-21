@@ -3,13 +3,14 @@
 // RegistroUnidadPage.jsx en mobile (POST /corridas + /movimientos + NFC).
 import { useState } from 'react';
 import { useRegistroBloc } from '../../lib/logic/useRegistroBloc.js';
+import { QrUnidadModal } from '../../lib/presentation/components/QrUnidadModal.jsx';
 import './Resgistro.css';
 
 export default function Registro({ tagNfc = null, onRegistrado = null }) {
   const {
     formData, WORKFLOW_ORDER, areaRecomendada, tiposUnidad,
     handleInputChange, handleCheckboxChange,
-    cargando, error, exito, guardarUnidad
+    cargando, error, guardarUnidad, busRegistrado, cerrarModalQR
   } = useRegistroBloc({ tagNfc, onRegistrado });
 
   const [paso, setPaso] = useState(1);
@@ -131,16 +132,7 @@ export default function Registro({ tagNfc = null, onRegistrado = null }) {
         )}
       </div>
 
-      {exito && (
-        <div className="modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal-card">
-            <div className="modal-card__body" style={{ textAlign: 'center' }}>
-              <h2>✅ Registro Exitoso</h2>
-              <p>La unidad fue registrada y enviada al patio.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <QrUnidadModal bus={busRegistrado} onCerrar={cerrarModalQR} />
     </div>
   );
 }

@@ -183,6 +183,19 @@ export const usePatioBloc = () => {
     }
   };
 
+  // Escaneo de QR: el código trae el número de serie, así que se avanza directo
+  // con POST /camiones/{serie}/avanzar (misma validación de área que el NFC).
+  const avanzarPorQr = async (serie) => {
+    setMoviendo(true);
+    try {
+      await AutobusRepository.avanzarAutobus(serie);
+      limpiarIniciado(serie);
+      await cargarAutobuses();
+    } finally {
+      setMoviendo(false);
+    }
+  };
+
   // NUEVA FUNCIÓN: Calcula el estado del semáforo para un camión
   const obtenerSemaforo = (bus) => {
     if (bus.estadoServicio !== 'En Proceso' || !bus.historialTiempos[bus.currentArea]?.inicio) return null;
@@ -205,6 +218,6 @@ export const usePatioBloc = () => {
     autobuses, cargando, cargarAutobuses,
     busSeleccionado, areaDestino, setAreaDestino, moviendo,
     abrirModalMover, cerrarModal, confirmarMovimiento, obtenerOcupacion, arrancarServicio,
-    confirmarMovimientoDirecto, avanzarBus, avanzarPorNfc, obtenerSemaforo, promediosArea
+    confirmarMovimientoDirecto, avanzarBus, avanzarPorNfc, avanzarPorQr, obtenerSemaforo, promediosArea
   };
 };

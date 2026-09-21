@@ -1,11 +1,12 @@
 // src/lib/presentation/pages/RegistroUnidadPage.jsx
 import { useRegistroBloc } from '../../logic/useRegistroBloc';
+import { QrUnidadModal } from '../components/QrUnidadModal';
 
 export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) => {
   const {
     step, setStep, formData, WORKFLOW_ORDER, areaRecomendada, todasSeleccionadas, tiposUnidad,
     handleInputChange, handleCheckboxChange, handleToggleAll, avanzarPaso,
-    cargando, error, exito, guardarUnidad
+    cargando, error, exito, guardarUnidad, busRegistrado, cerrarModalQR
   } = useRegistroBloc({ tagNfc, onRegistrado });
 
   // =========================================================
@@ -204,6 +205,8 @@ export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) 
           </div>
         </div>
       )}
+
+      <QrUnidadModal bus={busRegistrado} onCerrar={cerrarModalQR} />
     </div>
   );
 };

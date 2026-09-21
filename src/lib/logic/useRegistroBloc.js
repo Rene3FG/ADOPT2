@@ -41,6 +41,9 @@ export const useRegistroBloc = ({ tagNfc = null, onRegistrado = null } = {}) => 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const [exito, setExito] = useState(false);
+  // Unidad recién guardada: mientras exista se muestra el modal con su QR
+  // imprimible, y el formulario se reinicia hasta que se cierre.
+  const [busRegistrado, setBusRegistrado] = useState(null);
 
   // Sistema de recomendación inteligente
   const getRecommendedArea = () => {
@@ -120,18 +123,8 @@ export const useRegistroBloc = ({ tagNfc = null, onRegistrado = null } = {}) => 
       }
 
       setExito(true);
-      setTimeout(() => {
-        setExito(false);
-        setStep(1); // Regresamos al paso 1
-        setFormData({
-          numeroSerie: '', tipoUnidad: 'ADO', horaSalida: '',
-          conductor: '', terminalOrigen: '', terminalDestino: '',
-          areasRequeridas: { 'Desfogue': false, 'Diesel': false, 'Ad-blue': false, 'Taller': false, 'Lavado Interior': false, 'Lavado Exterior': false },
-          areaInicial: '', observaciones: ''
-        });
-        if (onRegistrado) onRegistrado(serieRegistrada);
-      }, 2000);
-      
+      setBusRegistrado({ numeroSerie: serieRegistrada, tipoUnidad: formData.tipoUnidad });
+
     } catch (err) {
       setError('Error al registrar. Verifica que el número de serie no esté duplicado.');
     } finally {
@@ -139,10 +132,25 @@ export const useRegistroBloc = ({ tagNfc = null, onRegistrado = null } = {}) => 
     }
   };
 
+  const cerrarModalQR = () => {
+    const serie = busRegistrado?.numeroSerie;
+    setBusRegistrado(null);
+    setExito(false);
+    setStep(1); // Regresamos al paso 1
+    setFormData({
+      numeroSerie: '', tipoUnidad: 'ADO', horaSalida: '',
+      conductor: '', terminalOrigen: '', terminalDestino: '',
+      areasRequeridas: { 'Desfogue': false, 'Diesel': false, 'Ad-blue': false, 'Taller': false, 'Lavado Interior': false, 'Lavado Exterior': false },
+      areaInicial: '', observaciones: ''
+    });
+    if (onRegistrado && serie) onRegistrado(serie);
+  };
+
   return {
     step, setStep,
     formData, WORKFLOW_ORDER, areaRecomendada, todasSeleccionadas, tiposUnidad,
     handleInputChange, handleCheckboxChange, handleToggleAll, avanzarPaso,
-    cargando, error, exito, guardarUnidad
+    cargando, error, exito, guardarUnidad,
+    busRegistrado, cerrarModalQR
   };
 };
