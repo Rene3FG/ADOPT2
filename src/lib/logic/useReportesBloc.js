@@ -25,7 +25,9 @@ export const useReportesBloc = () => {
       }
 
       const { jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
+      // jspdf-autotable 5.x ya no agrega doc.autoTable() al importarse desde un
+      // bundler: hay que usar la función exportada, autoTable(doc, {...}).
+      const { autoTable } = await import('jspdf-autotable');
 
       const doc = new jsPDF();
       doc.text(`Reporte de Movimientos ADO`, 14, 15);
@@ -41,7 +43,7 @@ export const useReportesBloc = () => {
         mov.hora_salida ? new Date(mov.hora_salida).toLocaleString() : 'En proceso'
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         head: [tableColumn], body: tableRows, startY: 30,
         styles: { fontSize: 8 }, headStyles: { fillColor: [206, 0, 55] } 
       });
