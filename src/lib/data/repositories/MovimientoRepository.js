@@ -20,8 +20,11 @@ function rangoFechas(fechaInicioISO, fechaFinISO) {
 
 function combinarFechaHora(fecha, hora) {
   if (!hora) return null;
-  // hora_salida llega como datetime ISO completo; hora_entrada, como TIME suelto
-  return hora.includes('T') ? hora : `${fecha}T${hora}`;
+  // hora_salida llega como datetime ISO completo; hora_entrada, como TIME suelto.
+  // La base guarda la hora local etiquetada como UTC ("+00:00"): se quita el
+  // sufijo para que new Date() la lea como hora local y no la corra 6 h.
+  if (hora.includes('T')) return hora.replace(/(Z|[+-]\d{2}:?\d{2})$/, '');
+  return `${fecha}T${hora}`;
 }
 
 export const MovimientoRepository = {
