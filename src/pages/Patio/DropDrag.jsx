@@ -9,13 +9,14 @@ import '../shared/desktop-shared.css';
 import Registro from '../Registro/Registro.jsx';
 import ConfAvaz from '../ConfAvanz/ConfAvaz.jsx';
 import Reportes from '../Reportes/Reportes.jsx';
+import Analiticas from '../Analiticas/Analiticas.jsx';
 import { HistorialPage } from '../../lib/presentation/pages/HistorialPage.jsx';
 import { usePatioBloc } from '../../lib/logic/usePatioBloc.js';
 import { useMenuBloc } from '../../lib/logic/useMenuBloc.js';
 import { AreaRepository } from '../../lib/data/repositories/AreaRepository.js';
 import { AREAS_PATIO } from '../../lib/areasConfig.js';
 
-import { MdDashboard, MdAssignmentTurnedIn, MdHistory, MdBarChart, MdSettings, MdExitToApp, MdAddAlert } from 'react-icons/md';
+import { MdDashboard, MdAssignmentTurnedIn, MdHistory, MdBarChart, MdSettings, MdExitToApp, MdAddAlert, MdInsights } from 'react-icons/md';
 import { TbWash, TbWashDryDip } from 'react-icons/tb';
 import { BsFillFuelPumpDieselFill } from 'react-icons/bs';
 import { CiDroplet } from 'react-icons/ci';
@@ -194,6 +195,8 @@ export default function DropDrag({ usuario, onLogout }) {
         return <HistorialPage />;
       case 'reportes':
         return <Reportes autobuses={autobuses} obtenerSemaforo={obtenerSemaforo} />;
+      case 'analiticas':
+        return <Analiticas />;
       case 'configuracion':
         return <ConfAvaz autobuses={autobuses} areas={areas} confirmarMovimientoDirecto={confirmarMovimientoDirecto} />;
       default:
@@ -230,6 +233,12 @@ export default function DropDrag({ usuario, onLogout }) {
             <button className={`sidebar__item ${pestanaActiva === 'reportes' ? 'sidebar__item--active' : ''}`} onClick={() => irA('reportes')}>
               <MdBarChart className="sidebar__icon" />
               <span>Reportes</span>
+            </button>
+          )}
+          {(esAdmin || esSupervisor) && (
+            <button className={`sidebar__item ${pestanaActiva === 'analiticas' ? 'sidebar__item--active' : ''}`} onClick={() => irA('analiticas')}>
+              <MdInsights className="sidebar__icon" />
+              <span>Analíticas</span>
             </button>
           )}
           {esAdmin && (
