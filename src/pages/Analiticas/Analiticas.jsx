@@ -132,7 +132,7 @@ function Mantenimiento({ datos }) {
       >
         <BarrasHorizontales
           filas={conTipos.map((t) => ({ etiqueta: t.tipo, valores: [t.n] }))}
-          series={[{ nombre: 'Veces', color: 'var(--an-serie-1)' }]}
+          series={[{ nombre: 'Veces', color: 'var(--an-morado)' }]}
           vacio="Aún no se registran trabajos de taller desde la app en este periodo."
         />
       </Tarjeta>
@@ -142,7 +142,7 @@ function Mantenimiento({ datos }) {
       >
         <BarrasHorizontales
           filas={datos.por_area.map((a) => ({ etiqueta: a.area, valores: [a.promedio_min], n: [a.n] }))}
-          series={[{ nombre: 'Promedio', color: 'var(--an-serie-1)' }]}
+          series={[{ nombre: 'Promedio', color: 'var(--an-morado)' }]}
           formato={fmtMin}
           vacio="Sin movimientos completados en este periodo."
         />

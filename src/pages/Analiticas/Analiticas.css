@@ -1,12 +1,13 @@
 /* Analíticas — mismos tokens que el resto del escritorio (desktop-shared.css):
    rojo ADO, texto pizarra y bordes suaves. Las dos series categóricas (rojo ADO y
-   azul) pasaron validate_palette.js en modo claro: CVD ΔE 21.9, visión normal ΔE 34.2. */
+   morado) pasaron validate_palette.js en modo claro: CVD ΔE 30.5, visión normal ΔE 34.7. */
 .analiticas-panel {
   --an-rojo: #e21c24;
   --an-rojo-osc: #b8141a;
   --an-rojo-suave: #fef2f2;
   --an-serie-1: var(--an-rojo);   /* ranura 1: rojo ADO */
-  --an-serie-2: #1d6fb8;          /* ranura 2: azul */
+  --an-morado: #7c3aed;           /* morado de la app (--ado-purple) */
+  --an-serie-2: var(--an-morado); /* ranura 2: morado */
   --an-texto: #0f172a;
   --an-texto-2: #64748b;
   --an-borde: #e2e8f0;
