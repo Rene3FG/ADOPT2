@@ -279,7 +279,7 @@ export default function Analiticas() {
           {!datos.muestra.suficiente && (
             <div className="an-aviso">
               Pocos datos: {datos.muestra.con_duracion} movimientos con duración en {datos.muestra.dias} día(s).
-              Las cifras se vuelven confiables con al menos 30 movimientos completados desde la app.
+              Las cifras se vuelven confiables con al menos 30 movimientos completados.
             </div>
           )}
           <div className={cargando ? 'an-contenido an-contenido--carga' : 'an-contenido'}>
@@ -287,7 +287,10 @@ export default function Analiticas() {
             {pestana === 'turnos' && <Turnos datos={datos} />}
             {pestana === 'retraso' && <Retraso datos={datos} />}
           </div>
-          <p className="an-nota">Turnos: día 06:00–18:00 y noche 18:00–06:00, por hora local de entrada. Solo se cuentan movimientos capturados desde la app.</p>
+          <p className="an-nota">
+            Turnos: día 06:00–18:00 y noche 18:00–06:00, por hora local de entrada. Se cuentan todos los movimientos del sistema (app y hoja de cálculo sincronizada)
+            {datos.muestra.descartados > 0 && `; se omitieron ${datos.muestra.descartados} con fechas inconsistentes`}.
+          </p>
         </>
       )}
     </div>
