@@ -1,6 +1,7 @@
 // src/pages/Analiticas/Analiticas.jsx — analíticas de escritorio: tendencias de
 // mantenimiento, comparativa día/noche y retraso de salida (GET /analiticas).
 import { useEffect, useState } from 'react';
+import { MdTimeline, MdWarningAmber, MdPercent } from 'react-icons/md';
 import { AnaliticasRepository } from '../../lib/data/repositories/AnaliticasRepository.js';
 import './Analiticas.css';
 
@@ -56,17 +57,20 @@ function BarrasHorizontales({ filas, series, formato = (v) => v, vacio }) {
   );
 }
 
-// Columnas verticales (una serie) para tendencias por semana.
+// Columnas verticales (una serie) para tendencias. Con muchas columnas (p. ej. 29 días)
+// pasa a modo denso: barras delgadas, solo se rotulan algunas fechas y el valor va en el tooltip.
 function Columnas({ items, formato = (v) => v, vacio }) {
   const max = Math.max(0, ...items.map((i) => i.valor ?? 0));
   if (items.length === 0 || max === 0) return <p className="an-vacio">{vacio}</p>;
+  const denso = items.length > 12;
+  const paso = Math.ceil(items.length / 8);
   return (
-    <div className="an-cols">
-      {items.map((i) => (
+    <div className={denso ? 'an-cols an-cols--densas' : 'an-cols'}>
+      {items.map((i, idx) => (
         <div className="an-col" key={i.etiqueta} title={`${i.etiqueta}: ${formato(i.valor)}`}>
-          <span className="an-col__valor">{formato(i.valor)}</span>
+          {!denso && <span className="an-col__valor">{formato(i.valor)}</span>}
           <div className="an-col__barra" style={{ height: `${((i.valor ?? 0) / max) * 100}%` }} />
-          <span className="an-col__etq">{i.etiqueta}</span>
+          <span className="an-col__etq">{!denso || idx % paso === 0 || idx === items.length - 1 ? i.etiqueta : '\u00a0'}</span>
         </div>
       ))}
     </div>
@@ -97,8 +101,11 @@ function Tarjeta({ titulo, subtitulo, children, tabla }) {
   );
 }
 
-const Kpi = ({ valor, etiqueta }) => (
-  <div className="an-kpi"><strong>{valor}</strong><span>{etiqueta}</span></div>
+const Kpi = ({ valor, etiqueta, icono, tono }) => (
+  <div className={`an-kpi an-kpi--icono${tono ? ` an-kpi--${tono}` : ''}`}>
+    <div className="an-kpi__icono">{icono}</div>
+    <div><strong>{valor}</strong><span>{etiqueta}</span></div>
+  </div>
 );
 
 const fmtSemana = (iso) => {
@@ -131,7 +138,7 @@ function Mantenimiento({ datos }) {
       </Tarjeta>
       <Tarjeta
         titulo="Tiempo promedio por área"
-        tabla={{ columnas: ['Área', 'Movimientos', 'Tiempo promedio'], filas: datos.por_area.map((a) => [a.area, a.n, fmtMin(a.promedio_min)]) }}
+        tabla={{ columnas: ['Área', 'Movimientos', 'Promedio', 'Mediana', 'p90'], filas: datos.por_area.map((a) => [a.area, a.n, fmtMin(a.promedio_min), fmtMin(a.mediana_min), fmtMin(a.p90_min)]) }}
       >
         <BarrasHorizontales
           filas={datos.por_area.map((a) => ({ etiqueta: a.area, valores: [a.promedio_min], n: [a.n] }))}
@@ -156,7 +163,7 @@ function Turnos({ datos }) {
     <>
       <div className="an-kpis">
         {[dia, noche].map((t, i) => (
-          <div className="an-kpi an-kpi--turno" key={t.turno} style={{ '--an-borde': series[i].color }}>
+          <div className="an-kpi an-kpi--turno" key={t.turno} style={{ '--an-borde-turno': series[i].color }}>
             <span>{t.turno}</span>
             <strong>{t.movimientos}</strong>
             <span>movimientos · {t.completados} completados · promedio {fmtMin(t.promedio_min)}</span>
@@ -189,9 +196,10 @@ function Retraso({ datos }) {
   return (
     <>
       <div className="an-kpis">
-        <Kpi valor={r.viajes_medidos} etiqueta="viajes medidos (con todos sus servicios completos)" />
-        <Kpi valor={r.con_retraso} etiqueta="terminaron después de su hora de salida" />
-        <Kpi valor={`${pct} %`} etiqueta="con retraso" />
+        <Kpi valor={r.viajes_medidos} etiqueta="viajes medidos (con todos sus servicios completos)" icono={<MdTimeline />} />
+        <Kpi valor={r.con_retraso} etiqueta="terminaron después de su hora de salida" icono={<MdWarningAmber />} tono="alerta" />
+        <Kpi valor={`${pct} %`} etiqueta="de los viajes con retraso" icono={<MdPercent />} tono="alerta" />
+        <Kpi valor={fmtMin(r.mediana_retraso_min)} etiqueta={`retraso típico (mediana) · p90 ${fmtMin(r.p90_retraso_min)}`} icono={<MdTimeline />} />
       </div>
       <Tarjeta
         titulo="Retraso promedio por día"
@@ -211,7 +219,9 @@ function Retraso({ datos }) {
           <Tabla
             columnas={['Unidad', 'Fecha', 'Salida programada', 'Fin de servicios', 'Diferencia']}
             filas={r.peores.map((v) => [v.serie, v.fecha, v.salida_programada, v.fin_servicios,
-              v.retraso_min > 0 ? `▲ Retraso ${fmtMin(v.retraso_min)}` : `✓ ${fmtMin(v.retraso_min)} antes`])}
+              v.retraso_min > 0
+                ? <span className="an-pill an-pill--tarde">▲ Retraso {fmtMin(v.retraso_min)}</span>
+                : <span className="an-pill an-pill--ok">✓ {fmtMin(v.retraso_min)} antes</span>])}
           />
         )}
       </Tarjeta>
