@@ -106,6 +106,14 @@ export const AutobusRepository = {
           .filter(([campo]) => corrida[campo])
           .map(([, area]) => area);
 
+        // Áreas distintas requeridas ya completadas: los movimientos repetidos o
+        // forzados fuera de ruta no deben inflar el avance.
+        const requiredCompletadas = new Set(
+          completados
+            .map((m) => AREA_API_TO_LOCAL[m.area_nombre] || m.area_nombre)
+            .filter((a) => requiredAreas.includes(a))
+        );
+
         return {
           id_autobus: r.id,
           busId: r.serie,
@@ -119,7 +127,12 @@ export const AutobusRepository = {
           completedAreas: completados.map((m) => AREA_API_TO_LOCAL[m.area_nombre] || m.area_nombre),
           currentArea: abierto ? AREA_API_TO_LOCAL[abierto.area_nombre] || abierto.area_nombre : 'Espera',
           progressPercentage:
-            requiredAreas.length === 0 ? 100 : Math.round((completados.length / requiredAreas.length) * 100),
+            requiredAreas.length === 0
+              ? 100
+              : Math.min(
+                  100,
+                  Math.round((requiredCompletadas.size / requiredAreas.length) * 100)
+                ),
           isPriority: esPrioridad(corrida.hora_salida),
           estadoServicio: 'Pendiente', // ver TODO en usePatioBloc.js: no hay campo persistido para esto
           historialTiempos: construirHistorial(movsBus),

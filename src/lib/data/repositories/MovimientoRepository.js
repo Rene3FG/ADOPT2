@@ -19,7 +19,9 @@ function rangoFechas(fechaInicioISO, fechaFinISO) {
 }
 
 function combinarFechaHora(fecha, hora) {
-  return hora ? `${fecha}T${hora}` : null;
+  if (!hora) return null;
+  // hora_salida llega como datetime ISO completo; hora_entrada, como TIME suelto
+  return hora.includes('T') ? hora : `${fecha}T${hora}`;
 }
 
 export const MovimientoRepository = {
