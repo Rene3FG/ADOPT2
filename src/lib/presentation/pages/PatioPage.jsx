@@ -7,6 +7,7 @@ import { ConfiguracionPage } from './ConfiguracionPage';
 // NUEVO: Importamos las páginas de tu compañero
 import { HistorialPage } from './HistorialPage';
 import { ReportesPage } from './ReportesPage';
+import { AnaliticasPage } from './AnaliticasPage';
 import { AREAS_PATIO } from '../../areasConfig';
 import { AreaRepository } from '../../data/repositories/AreaRepository';
 import { SwipeToConfirm } from '../components/SwipeToConfirm';
@@ -194,6 +195,7 @@ export const PatioPage = ({ usuario }) => {
           {esAdmin && <li><a className={vistaActual === 'registrar' ? 'active' : ''} onClick={() => navegarA('registrar')}>⊕ Registrar camión</a></li>}
           {(esAdmin || esSupervisor) && <li><a className={vistaActual === 'historial' ? 'active' : ''} onClick={() => navegarA('historial')}>🕒 Historial</a></li>}
           {(esAdmin || esSupervisor) && <li><a className={vistaActual === 'reportes' ? 'active' : ''} onClick={() => navegarA('reportes')}>📊 Reportes</a></li>}
+          {(esAdmin || esSupervisor) && <li><a className={vistaActual === 'analiticas' ? 'active' : ''} onClick={() => navegarA('analiticas')}>📈 Analíticas</a></li>}
           {esAdmin && <li><a className={vistaActual === 'configuracion' ? 'active' : ''} onClick={() => navegarA('configuracion')}>⚙️ Config. Avanzada</a></li>}
           <li style={{ marginTop: '20px' }}><a onClick={confirmarCerrarSesion} style={{ color: '#ef4444' }}>🚪 Cerrar sesión</a></li>
         </ul>
@@ -428,6 +430,7 @@ export const PatioPage = ({ usuario }) => {
           {vistaActual === 'configuracion' && esAdmin && <ConfiguracionPage autobuses={autobuses} />}
           {vistaActual === 'historial' && (esAdmin || esSupervisor) && <HistorialPage />}
           {vistaActual === 'reportes' && (esAdmin || esSupervisor) && <ReportesPage />}
+          {vistaActual === 'analiticas' && (esAdmin || esSupervisor) && <AnaliticasPage />}
         </div>
 
         {/* ================= MODAL ADMIN / SUPERVISOR ================= */}
