@@ -61,7 +61,7 @@ export const UsuariosPage = () => {
 
       {modalAbierto && (
         <div onClick={cerrarModal} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: '20px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '450px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', textAlign: 'left', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '450px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
             <h3 style={{ margin: '0 0 20px 0', color: 'var(--ado-purple)' }}>{esEdicion ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
 
             <form onSubmit={guardarUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>

@@ -36,14 +36,14 @@ export const ConfiguracionPage = ({ autobuses = [] }) => {
   const tdStyle = { padding: '12px', whiteSpace: 'nowrap' };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="config-page" style={{ maxWidth: '1000px', margin: '0 auto' }}>
 
       {/* HEADER Y TABS (permite scroll en celulares si las pestañas no caben) */}
       <div style={{ marginBottom: '25px' }}>
         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.8rem', fontWeight: 800 }}>Configuración Avanzada</h2>
         <p style={{ margin: '5px 0 20px 0', color: 'var(--text-muted)' }}>Administra los parámetros generales del sistema.</p>
 
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', overflowX: 'auto', gap: '10px' }}>
+        <div className="config-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', overflowX: 'auto', gap: '10px' }}>
           <button style={tabActiva === 'usuarios' ? btnTabActivo : btnTabInactivo} onClick={() => setTabActiva('usuarios')}>
             👥 Gestión de Personal
           </button>
@@ -169,7 +169,7 @@ export const ConfiguracionPage = ({ autobuses = [] }) => {
       {/* MODAL PARA USUARIOS */}
       {modalUsuAbierto && (
         <div onClick={cerrarModUsu} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: '20px', boxSizing: 'border-box' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', textAlign: 'left', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ margin: '0 0 20px 0', color: 'var(--ado-purple)' }}>{esEdicionUsu ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
             <form onSubmit={guardarUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div><label style={{ fontWeight: 600 }}>ID Empleado</label><input type="text" name="id_empleado" value={formUsu.id_empleado} onChange={handleUsuChange} disabled={esEdicionUsu} required style={{ ...inputStyle, backgroundColor: esEdicionUsu ? '#f1f5f9' : 'white' }} /></div>
@@ -207,7 +207,7 @@ export const ConfiguracionPage = ({ autobuses = [] }) => {
       {/* MODAL PARA ÁREAS */}
       {modalAreaAbierto && (
         <div onClick={cerrarModalArea} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: '20px', boxSizing: 'border-box' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', textAlign: 'left', padding: '30px', borderRadius: '16px', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#0284c7' }}>{esEdicionArea ? 'Modificar Área' : 'Crear Nueva Área'}</h3>
             <form onSubmit={guardarArea} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>

@@ -26,7 +26,7 @@ export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) 
   };
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid var(--border-color)' }}>
+    <div className="registro-card" style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid var(--border-color)' }}>
       <header style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '15px', marginBottom: '25px' }}>
         <h2 style={{ color: 'var(--text-main)', margin: 0, fontWeight: 800 }}>Recepción de Unidades</h2>
         <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
@@ -43,7 +43,7 @@ export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) 
       {step === 1 && (
         <form onSubmit={avanzarPaso} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div className="registro-grid2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Número de Autobús *</label>
               <input 
@@ -94,7 +94,7 @@ export const RegistroUnidadPage = ({ tagNfc = null, onRegistrado = null } = {}) 
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div className="registro-grid2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>Terminal de Origen</label>
               <input

@@ -441,7 +441,7 @@ export const PatioPage = ({ usuario }) => {
           >
             <div 
               onClick={(e) => e.stopPropagation()} 
-              style={{ backgroundColor: 'white', padding: '25px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}
+              style={{ backgroundColor: 'white', textAlign: 'left', padding: '25px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid var(--bg-light)', paddingBottom: '10px' }}>
                 <h3 style={{ margin: 0, color: 'var(--ado-purple)', fontSize: '1.4rem' }}>Detalles Unidad #{busSeleccionado.busId}</h3>
