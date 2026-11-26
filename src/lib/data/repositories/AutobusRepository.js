@@ -179,6 +179,13 @@ export const AutobusRepository = {
   // reemplaza la orquestación de 2 llamadas de moverAutobus para este flujo.
   avanzarAutobus: (serie) => apiFetch(`/camiones/${serie}/avanzar`, { method: 'POST' }),
 
+  // Check-in con la URL del tag/QR, hecho por fetch desde la app: el backend
+  // aplica la regla de área de la sesión del operador (JWT de apiFetch).
+  checkin: ({ serie, k }) =>
+    apiFetch(`/checkin?unidad=ADO-${serie}&k=${encodeURIComponent(k)}`, {
+      headers: { Accept: 'application/json' },
+    }),
+
   escanearNfc: (tagUid) =>
     apiFetch('/nfc/scan', {
       method: 'POST',

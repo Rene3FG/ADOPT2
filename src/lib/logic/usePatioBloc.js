@@ -197,9 +197,10 @@ export const usePatioBloc = ({ intervaloMs = 30000 } = {}) => {
   const avanzarPorQr = async (serie) => {
     setMoviendo(true);
     try {
-      await AutobusRepository.avanzarAutobus(serie);
+      const r = await AutobusRepository.avanzarAutobus(serie);
       limpiarIniciado(serie);
       await cargarAutobuses();
+      return r;
     } finally {
       setMoviendo(false);
     }

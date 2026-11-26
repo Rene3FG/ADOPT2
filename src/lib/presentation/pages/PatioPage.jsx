@@ -1,5 +1,5 @@
 // src/lib/presentation/pages/PatioPage.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMenuBloc } from '../../logic/useMenuBloc';
 import { usePatioBloc } from '../../logic/usePatioBloc';
 import { RegistroUnidadPage } from './RegistroUnidadPage';
@@ -12,7 +12,8 @@ import { AREAS_PATIO } from '../../areasConfig';
 import { AreaRepository } from '../../data/repositories/AreaRepository';
 import { SwipeToConfirm } from '../components/SwipeToConfirm';
 import { LectorQR } from '../components/LectorQR';
-import { serieDesdeCodigo } from '../../logic/codigoUnidad';
+import { serieDesdeCodigo, checkinDesdeCodigo, mensajeErrorNfc } from '../../logic/codigoUnidad';
+import { AutobusRepository } from '../../data/repositories/AutobusRepository';
 import "../../../App.css";
 import "../styles/PatioPage.css";
 
@@ -34,82 +35,140 @@ export const PatioPage = ({ usuario }) => {
     busSeleccionado, cerrarModal, abrirModalMover, moviendo,
     arrancarServicio, avanzarBus, avanzarPorNfc, avanzarPorQr,
     obtenerSemaforo, promediosArea
-  } = usePatioBloc();
+  } = usePatioBloc({ intervaloMs: usuario?.rol === 'Operador' ? 3000 : 30000 });
 
-  // Web NFC (NDEFReader) solo existe en Android + Chrome — en cualquier otro
-  // navegador el botón se oculta en vez de fallar al tocarlo.
-  const soporteNfc = typeof window !== 'undefined' && 'NDEFReader' in window;
-  const escanearNfc = async () => {
-    try {
-      // Mientras el tag sigue cerca de la antena, Android reporta el mismo
-      // tag varias veces en milisegundos — sin este candado cada lectura
-      // dispara su propio avance y produce movimientos duplicados.
-      let yaLeido = false;
-      const controller = new AbortController();
-      const reader = new window.NDEFReader();
-      await reader.scan({ signal: controller.signal });
-      reader.onreading = async ({ serialNumber, message }) => {
-        if (yaLeido) return;
-        // Preferimos el UID físico del tag (serialNumber); si el navegador no
-        // lo expone, caemos al primer registro de texto NDEF escrito al enrolar.
-        const registroTexto = message?.records?.find(r => r.recordType === 'text');
-        const tagUid = serialNumber || (registroTexto && new TextDecoder(registroTexto.encoding).decode(registroTexto.data));
-        // Tags de la maqueta: traen la URL de check-in (unidad=ADO-101) — se
-        // avanza esa unidad con la sesión del operador, igual que con el QR.
-        const registroUrl = message?.records?.find(r => r.recordType === 'url');
-        const serieUrl = registroUrl ? serieDesdeCodigo(new TextDecoder().decode(registroUrl.data)) : null;
-        if (!tagUid && serieUrl === null) return;
-        yaLeido = true;
-        controller.abort();
-        if (serieUrl !== null) {
-          await procesarQr(serieUrl);
-          return;
-        }
-        try {
-          await avanzarPorNfc(tagUid);
-        } catch (error) {
-          const msg = error.message || '';
-          if (msg.includes('no está registrado a ningún camión')) {
-            // Llegada nueva: el tag no pertenece a ninguna unidad — abrir el
-            // registro de recepción con el tag listo para asociarse.
-            setTagPendiente(tagUid);
-            setVistaActual('registrar');
-          } else if (msg.includes('no está en tu área')) {
-            // El backend rechazó el avance porque la unidad no está registrada
-            // en el área de quien escaneó: la estación siguiente la recibió
-            // fuera del orden esperado de la ruta.
-            alert('Flujo incorrecto, confirme con el supervisor.');
-          } else {
-            alert(msg || 'No se pudo procesar el tag NFC.');
-          }
-        }
-      };
-    } catch (error) {
-      alert('No se pudo activar el lector NFC: ' + (error.message || error));
-    }
+  // Aviso flotante de éxito/error de NFC y QR (se oculta solo).
+  const [aviso, setAviso] = useState(null);
+  const avisoTimerRef = useRef(null);
+  const mostrarAviso = (tipo, texto) => {
+    clearTimeout(avisoTimerRef.current);
+    setAviso({ tipo, texto });
+    avisoTimerRef.current = setTimeout(() => setAviso(null), tipo === 'error' ? 8000 : 4000);
   };
 
-  // El QR pegado en el autobús contiene solo su número de serie (ver QrUnidadModal).
-  const soporteCamara = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
-  const procesarQr = async (codigo) => {
-    setEscaneandoQr(false);
-    const serie = serieDesdeCodigo(codigo);
+  // Paso de una unidad leído de un tag NFC o un QR. Con la URL de check-in
+  // (unidad=ADO-101&k=...) se registra por fetch sin salir de la app; con un
+  // QR viejo (solo la serie) se usa el avance de siempre. Ambos con la sesión
+  // del operador: el backend rechaza unidades que no están en su área.
+  const registrarPaso = async (codigo) => {
+    const ck = checkinDesdeCodigo(codigo);
+    const serie = ck ? ck.serie : serieDesdeCodigo(codigo);
     if (serie === null) {
-      alert('El código QR no corresponde a una unidad ADO.');
+      mostrarAviso('error', 'El código no corresponde a una unidad ADO.');
       return;
     }
     try {
-      await avanzarPorQr(serie);
+      if (ck) {
+        const r = await AutobusRepository.checkin(ck);
+        mostrarAviso(r.aviso ? 'info' : 'ok', `${r.mensaje} ${r.detalle || ''}`.trim());
+      } else {
+        const r = await avanzarPorQr(serie);
+        mostrarAviso('ok', `✅ ADO-${serie} → ${r?.area_nueva ?? 'siguiente estación'}`);
+      }
     } catch (error) {
       const msg = error.message || '';
       if (msg.includes('no está en tu área')) {
-        alert('Flujo incorrecto, confirme con el supervisor.');
-      } else if (msg.includes('no encontrado')) {
-        alert(`La unidad ${serie} no está en el patio hoy. Verifica el código QR.`);
+        mostrarAviso('error', `Flujo incorrecto, confirme con el supervisor. ${msg}`);
+      } else if (msg.includes('no encontrado') || msg.includes('no está registrada')) {
+        mostrarAviso('error', `La unidad ADO-${serie} no está en el patio hoy.`);
       } else {
-        alert(msg || 'No se pudo procesar el código QR.');
+        mostrarAviso('error', msg || 'No se pudo registrar el paso.');
       }
+    } finally {
+      cargarAutobuses();
     }
+  };
+
+  // Web NFC (NDEFReader.scan) — Chrome en Android, sobre HTTPS. Arranca con el
+  // toque del botón (el navegador exige el gesto y ahí pide el permiso) y sigue
+  // leyendo hasta "Cancelar". El botón nunca se oculta: sin soporte explica por qué.
+  const [escaneandoNfc, setEscaneandoNfc] = useState(false);
+  const nfcCtrlRef = useRef(null);
+  const detenerNfc = () => {
+    nfcCtrlRef.current?.abort();
+    nfcCtrlRef.current = null;
+    setEscaneandoNfc(false);
+  };
+  useEffect(() => () => nfcCtrlRef.current?.abort(), []);
+
+  const escanearNfc = async () => {
+    if (!('NDEFReader' in window)) {
+      mostrarAviso('error', window.isSecureContext
+        ? 'Este navegador no soporta NFC. Abre la app en Chrome para Android (o usa "Escanear QR").'
+        : 'El NFC solo funciona en una página segura (https). Abre la app desde su dirección https en Chrome para Android.');
+      return;
+    }
+    detenerNfc();
+    const ctrl = new AbortController();
+    nfcCtrlRef.current = ctrl;
+    // Mientras el tag sigue cerca, Android lo reporta varias veces: misma
+    // lectura en menos de 5 s se ignora.
+    const ultimas = new Map();
+    try {
+      const reader = new window.NDEFReader();
+      reader.onreadingerror = () => {
+        mostrarAviso('error', 'No se pudo leer el tag. Acércalo de nuevo al centro del teléfono y mantenlo quieto.');
+      };
+      reader.onreading = async ({ serialNumber, message }) => {
+        const registros = message?.records || [];
+        const registroUrl = registros.find(r => r.recordType === 'url' || r.recordType === 'absolute-url');
+        const url = registroUrl ? new TextDecoder().decode(registroUrl.data) : null;
+        const registroTexto = registros.find(r => r.recordType === 'text');
+        const texto = registroTexto ? new TextDecoder(registroTexto.encoding).decode(registroTexto.data) : null;
+        const clave = url || serialNumber || texto;
+        if (!clave) {
+          mostrarAviso('error', 'El tag está vacío o no tiene datos de una unidad.');
+          return;
+        }
+        const ahora = Date.now();
+        if (ahora - (ultimas.get(clave) || 0) < 5000) return;
+        ultimas.set(clave, ahora);
+
+        if (url && serieDesdeCodigo(url) !== null) {
+          await registrarPaso(url);
+          return;
+        }
+        // Tags sin URL de check-in: flujo anterior por UID (nfc_tags).
+        const tagUid = serialNumber || texto;
+        try {
+          await avanzarPorNfc(tagUid);
+          mostrarAviso('ok', '✅ Unidad avanzada a la siguiente estación');
+        } catch (error) {
+          const msg = error.message || '';
+          if (msg.includes('no está registrado a ningún camión')) {
+            // Llegada nueva: abrir el registro de recepción con el tag listo.
+            detenerNfc();
+            setTagPendiente(tagUid);
+            setVistaActual('registrar');
+          } else if (msg.includes('no está en tu área')) {
+            mostrarAviso('error', 'Flujo incorrecto, confirme con el supervisor.');
+          } else {
+            mostrarAviso('error', msg || 'No se pudo procesar el tag NFC.');
+          }
+        }
+      };
+      setEscaneandoNfc(true);
+      await reader.scan({ signal: ctrl.signal });
+    } catch (error) {
+      if (nfcCtrlRef.current === ctrl) {
+        nfcCtrlRef.current = null;
+        setEscaneandoNfc(false);
+      }
+      if (error?.name !== 'AbortError') mostrarAviso('error', mensajeErrorNfc(error));
+    }
+  };
+
+  const soporteCamara = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+  const abrirLectorQr = () => {
+    if (!soporteCamara) {
+      mostrarAviso('error', 'La cámara no está disponible en este navegador. Abre la app en Chrome (https) y permite el acceso a la cámara.');
+      return;
+    }
+    setEscaneandoQr(true);
+  };
+  const procesarQr = async (codigo) => {
+    setEscaneandoQr(false);
+    await registrarPaso(codigo);
   };
 
   const esAdmin = usuario.rol === 'Administrador';
@@ -121,7 +180,12 @@ export const PatioPage = ({ usuario }) => {
   // El área del operador ahora la asigna el admin desde Configuración
   // (users.assigned_area_id) — /login la devuelve real, ya no se elige
   // manualmente ni se guarda en localStorage.
-  const areaOperador = usuario.areaAsignada || '';
+  // /login devuelve 'Ad-Blue' y el patio usa 'Ad-blue': se normaliza sin
+  // distinguir mayúsculas para que la cola del operador encuentre su área.
+  const areaOperador = (() => {
+    const a = usuario.areaAsignada || '';
+    return AREAS_PATIO.find(x => x.id.toLowerCase() === a.toLowerCase())?.id || a;
+  })();
 
   const [definicionAreas, setDefinicionAreas] = useState(AREAS_PATIO);
 
@@ -319,26 +383,20 @@ export const PatioPage = ({ usuario }) => {
                     <h1 style={{ margin: 0, fontSize: '24px' }}>Área: {areaOperador}</h1>
                     <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: 'bold', color: '#FFEB3B' }}>Ocupación: {ocupacionActual}/{capacidadMaxArea} camiones</p>
                     {promediosArea?.[areaOperador] != null && <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>⏱️ Tiempo Promedio: {promediosArea[areaOperador]} min</p>}
-                    {(soporteNfc || soporteCamara) && (
-                      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        {soporteNfc && (
-                          <button
-                            onClick={escanearNfc}
-                            disabled={moviendo}
-                            style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: moviendo ? 'not-allowed' : 'pointer' }}
-                          >
-                            📡 Escanear NFC
-                          </button>
-                        )}
-                        {soporteCamara && (
-                          <button
-                            onClick={() => setEscaneandoQr(true)}
-                            disabled={moviendo}
-                            style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: moviendo ? 'not-allowed' : 'pointer' }}
-                          >
-                            📷 Escanear QR
-                          </button>
-                        )}
+                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <button onClick={escanearNfc} style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: 'pointer' }}>
+                        📡 Escanear NFC
+                      </button>
+                      <button onClick={abrirLectorQr} style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '8px', cursor: 'pointer' }}>
+                        📷 Escanear QR
+                      </button>
+                    </div>
+                    {escaneandoNfc && (
+                      <div style={{ marginTop: '12px', padding: '10px 14px', backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>📡 Acerca el tag…</span>
+                        <button onClick={detenerNfc} style={{ padding: '6px 14px', fontSize: '14px', fontWeight: 'bold', backgroundColor: 'white', color: '#D32F2F', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                          Cancelar
+                        </button>
                       </div>
                     )}
                   </div>
@@ -511,6 +569,17 @@ export const PatioPage = ({ usuario }) => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ================= AVISO NFC / QR ================= */}
+        {aviso && (
+          <div
+            role="status"
+            onClick={() => setAviso(null)}
+            style={{ position: 'fixed', left: '50%', bottom: '24px', transform: 'translateX(-50%)', zIndex: 4000, maxWidth: 'calc(100% - 32px)', width: '420px', padding: '14px 18px', borderRadius: '10px', boxShadow: '0 4px 14px rgba(0,0,0,0.3)', color: 'white', fontWeight: 600, fontSize: '15px', textAlign: 'center', boxSizing: 'border-box', backgroundColor: aviso.tipo === 'ok' ? '#2E7D32' : aviso.tipo === 'info' ? '#B45309' : '#C62828' }}
+          >
+            {aviso.texto}
           </div>
         )}
 
