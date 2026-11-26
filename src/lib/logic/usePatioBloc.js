@@ -13,7 +13,9 @@ const TIEMPOS_BASE = {
   'Espera': 999 
 };
 
-export const usePatioBloc = () => {
+// intervaloMs: cada cuánto se refrescan los datos (la vista de escritorio pasa
+// 3000 para reflejar al instante los check-ins por NFC/QR; resto 30 s).
+export const usePatioBloc = ({ intervaloMs = 30000 } = {}) => {
   const [autobuses, setAutobuses] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busSeleccionado, setBusSeleccionado] = useState(null);
@@ -115,10 +117,17 @@ export const usePatioBloc = () => {
     // silenciosamente cada 30 seg (mismo reloj que actualiza los semáforos).
     const intervalo = setInterval(() => {
       setTick(t => t + 1);
-      cargarAutobuses();
+      if (intervaloMs >= 30000) cargarAutobuses();
     }, 30000);
-    return () => clearInterval(intervalo);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Polling rápido opcional: sin encimar peticiones si la red va lenta.
+    let enCurso = false;
+    const rapido = intervaloMs < 30000 ? setInterval(async () => {
+      if (enCurso || document.hidden) return;
+      enCurso = true;
+      try { await cargarAutobuses(); } finally { enCurso = false; }
+    }, intervaloMs) : null;
+    return () => { clearInterval(intervalo); if (rapido) clearInterval(rapido); };
+  }, [intervaloMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const abrirModalMover = (bus) => { setBusSeleccionado(bus); setAreaDestino(''); };
   const cerrarModal = () => { setBusSeleccionado(null); setAreaDestino(''); };

@@ -55,7 +55,7 @@ export default function DropDrag({ usuario, onLogout }) {
     autobuses, cargando, cargarAutobuses,
     confirmarMovimientoDirecto, avanzarBus, arrancarServicio,
     obtenerSemaforo, obtenerOcupacion, moviendo
-  } = usePatioBloc();
+  } = usePatioBloc({ intervaloMs: 3000 });
 
   const { ejecutarCerrarSesion } = useMenuBloc();
 
