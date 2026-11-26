@@ -12,6 +12,7 @@ import { AREAS_PATIO } from '../../areasConfig';
 import { AreaRepository } from '../../data/repositories/AreaRepository';
 import { SwipeToConfirm } from '../components/SwipeToConfirm';
 import { LectorQR } from '../components/LectorQR';
+import { serieDesdeCodigo } from '../../logic/codigoUnidad';
 import "../../../App.css";
 import "../styles/PatioPage.css";
 
@@ -53,9 +54,17 @@ export const PatioPage = ({ usuario }) => {
         // lo expone, caemos al primer registro de texto NDEF escrito al enrolar.
         const registroTexto = message?.records?.find(r => r.recordType === 'text');
         const tagUid = serialNumber || (registroTexto && new TextDecoder(registroTexto.encoding).decode(registroTexto.data));
-        if (!tagUid) return;
+        // Tags de la maqueta: traen la URL de check-in (unidad=ADO-101) — se
+        // avanza esa unidad con la sesión del operador, igual que con el QR.
+        const registroUrl = message?.records?.find(r => r.recordType === 'url');
+        const serieUrl = registroUrl ? serieDesdeCodigo(new TextDecoder().decode(registroUrl.data)) : null;
+        if (!tagUid && serieUrl === null) return;
         yaLeido = true;
         controller.abort();
+        if (serieUrl !== null) {
+          await procesarQr(serieUrl);
+          return;
+        }
         try {
           await avanzarPorNfc(tagUid);
         } catch (error) {
@@ -84,9 +93,8 @@ export const PatioPage = ({ usuario }) => {
   const soporteCamara = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   const procesarQr = async (codigo) => {
     setEscaneandoQr(false);
-    const texto = String(codigo ?? '').trim();
-    const serie = Number.parseInt(texto, 10);
-    if (!/^\d+$/.test(texto) || !Number.isSafeInteger(serie)) {
+    const serie = serieDesdeCodigo(codigo);
+    if (serie === null) {
       alert('El código QR no corresponde a una unidad ADO.');
       return;
     }
